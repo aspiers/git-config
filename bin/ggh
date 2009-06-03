@@ -1,3 +1,9 @@
 #!/bin/sh
 
+# No need for this to pass parameters; instead:
+#
+# type 'git' for list of most frequently used commands
+# type 'git $cmd -h' for quick help on $cmd
+# type 'git $cmd --help' for long help on $cmd
+
 exec git help -a
