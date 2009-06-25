@@ -1,0 +1,16 @@
+#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggs ggsh
+
+case "$service" in 
+  ggb)  git_fn=branch    ;;
+  ggci) git_fn=commit    ;;
+  ggco) git_fn=checkout  ;;
+  ggd)  git_fn=diff      ;;
+#  ggde) git_fn=describe  ;;
+  ggl)  git_fn=log       ;;
+  ggr)  git_fn=reset     ;;
+#  ggrl) git_fn=reflog    ;;
+  ggs)  git_fn=status    ;;
+#  ggsh) git_fn=show      ;;
+esac
+  
+eval _git-$git_fn "$@"
