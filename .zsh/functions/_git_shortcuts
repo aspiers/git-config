@@ -1,4 +1,4 @@
-#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrb ggrl ggs ggsh
+#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggs ggsh
 
 case "$service" in 
   ggb)  git_fn=branch    ;;
