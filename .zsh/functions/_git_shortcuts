@@ -8,7 +8,7 @@ case "$service" in
 #  ggde) git_fn=describe  ;;
   ggl)  git_fn=log       ;;
   ggr)  git_fn=reset     ;;
-  ggrb) git_fn=rebase    ;;
+#  ggrb) git_fn=rebase    ;;
 #  ggrl) git_fn=reflog    ;;
   ggs)  git_fn=status    ;;
 #  ggsh) git_fn=show      ;;
