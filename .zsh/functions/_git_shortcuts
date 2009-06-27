@@ -1,6 +1,7 @@
-#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggs ggsh
+#compdef gga ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggs ggsh
 
 case "$service" in 
+  gga)  git_fn=add       ;;
   ggb)  git_fn=branch    ;;
   ggci) git_fn=commit    ;;
   ggco) git_fn=checkout  ;;
