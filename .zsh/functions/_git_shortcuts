@@ -1,4 +1,4 @@
-#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggs ggsh
+#compdef ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrl ggrm ggs ggsh
 
 case "$service" in 
   ggb)  git_fn=branch    ;;
@@ -10,6 +10,7 @@ case "$service" in
   ggr)  git_fn=reset     ;;
 #  ggrb) git_fn=rebase    ;;
 #  ggrl) git_fn=reflog    ;;
+  ggrm) git_fn=rm        ;;
   ggs)  git_fn=status    ;;
 #  ggsh) git_fn=show      ;;
 esac
