@@ -10,5 +10,6 @@ git config --global core.excludesfile ~/.gitignore
 if [[ "$ZDOTUSER" == adam.spiers ]]; then
   git config --global user.name "Adam Spiers"
   # set user.email on a per-project basis
+  git config --global user.signingkey 7A2F2DDC
 fi
 
