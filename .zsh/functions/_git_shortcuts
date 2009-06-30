@@ -1,4 +1,4 @@
-#compdef gga ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrb ggrl ggs ggt
+#compdef gga ggb ggci ggco ggd ggde ggh ggk ggl ggmv ggr ggrb ggrl ggs ggt
 
 # Note that as of 4.3.4 there is a bug in _git that the invocation of
 # _call_function to the helper function for the specific command (such
@@ -15,6 +15,7 @@ case "$service" in
   ggd)  git_fn=diff      ;;
 #  ggde) git_fn=describe  ;;
   ggl)  git_fn=log       ;;
+  ggmv) git_fn=mv        ;;
   ggr)  git_fn=reset     ;;
   ggrb) git_fn=rebase    ;;
 #  ggrl) git_fn=reflog    ;;
