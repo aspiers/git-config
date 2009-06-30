@@ -3,3 +3,5 @@
 if which zsh >&/dev/null; then
   zsh -c zrec
 fi
+
+git config --global core.excludesfile ~/.gitignore
