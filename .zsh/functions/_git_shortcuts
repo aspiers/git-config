@@ -1,4 +1,4 @@
-#compdef gga ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrb ggrl ggs
+#compdef gga ggb ggci ggco ggd ggde ggh ggk ggl ggr ggrb ggrl ggs ggt
 
 # Note that as of 4.3.4 there is a bug in _git that the invocation of
 # _call_function to the helper function for the specific command (such
@@ -21,6 +21,7 @@ case "$service" in
 #  ggrm) git_fn=rm        ;;
   ggs)  git_fn=status    ;;
 #  ggsh) git_fn=show      ;;
+  ggt)  git_fn=tag       ;;
   *) echo "BUG in _git_shortcuts: $service not supported"; return 1 ;;
 esac
 
