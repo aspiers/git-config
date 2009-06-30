@@ -5,3 +5,10 @@ if which zsh >&/dev/null; then
 fi
 
 git config --global core.excludesfile ~/.gitignore
+
+# too lazy to make separate cfgctl module with personal config
+if [[ "$ZDOTUSER" == adam.spiers ]]; then
+  git config --global user.name "Adam Spiers"
+  # set user.email on a per-project basis
+fi
+
