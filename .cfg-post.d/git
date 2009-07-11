@@ -13,3 +13,4 @@ if [[ "$ZDOTUSER" == adam.spiers ]]; then
   git config --global user.signingkey 7A2F2DDC
 fi
 
+git config --global color.ui auto
