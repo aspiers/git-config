@@ -42,3 +42,4 @@ config.log
 autom4te.cache
 .hg
 .git
+*.log
