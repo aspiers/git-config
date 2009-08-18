@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec git ls-files -i --exclude-standard "$@"
