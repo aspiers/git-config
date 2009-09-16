@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# git Cherry Pick Multiple
+
+gglh --reverse "$@" | xargs -n1 git cherry-pick
