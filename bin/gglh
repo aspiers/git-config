@@ -1,4 +1,4 @@
 #!/bin/sh
 
-# show only the SHA1 - useful for piping to xargs -n1 git cherry-pick, etc.
+# show only the SHA1 - useful for multiple cherry-picks (see ggcpm)
 exec git log --pretty=format:%H --abbrev-commit "$@"
