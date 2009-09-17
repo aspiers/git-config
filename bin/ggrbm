@@ -1,0 +1,47 @@
+#!/bin/bash
+
+me=`basename $0`
+
+usage () {
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me [BRANCH-CONFIG]
+BRANCH-CONFIG defaults to $wd/.git/topic-branches and takes the
+format:
+
+# Comments are allowed
+# Each line contains a set of arguments to pass to git rebase
+# e.g.
+trunk myroot
+myroot mytopic1
+myroot mytopic2
+EOF
+    exit 1
+}
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    usage
+fi
+
+if [ "$#" -gt 1 ]; then
+    usage
+elif [ "$#" -eq 1 ]; then
+    conf="$1"
+    shift
+elif [ "$#" -eq 0 ]; then
+    root=`git root`
+    conf="$root/.git/topic-branches"
+fi
+
+exec 3>&0 # save STDIN tty
+grep -v '^ *#' "$conf" | while read -a args; do
+    echo "git rebase ${args[*]}"
+    if ! git rebase "${args[@]}"; then
+        echo "Fix git rebase ${args[@]} and exit shell to continue"
+        bash <&3
+    fi
+done
