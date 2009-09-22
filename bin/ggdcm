@@ -4,17 +4,20 @@
 
 me=`basename $0`
 
-if [ -z "$1" ]; then
+if [ "$#" -ne 1 ]; then
     echo "Usage: $me [commit range]" >&2
     exit 1
 fi
 
+found_errors=0
 
-gglh --reverse "$@" | while read sha1; do
+gglh --reverse "$1" | while read sha1; do
   if ggdc $sha1^ $sha1 >/dev/null; then
     echo "$sha1 has no whitespace errors"
     continue
   fi
+
+  : $(( found_errors++ ))
 
   (
     git --no-pager log -n1 --color $sha1
@@ -24,3 +27,5 @@ gglh --reverse "$@" | while read sha1; do
   ) | less
   echo ----------------------------------------------------------------------
 done
+
+exit $found_errors
