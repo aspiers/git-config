@@ -18,7 +18,7 @@ while read sha1; do
   fi
 
   : $(( error_count++ ))
-  echo "error_count now $error_count"
+  echo "error count now $error_count"
 
   (
     git --no-pager log -n1 --color $sha1 | git name-rev --stdin
