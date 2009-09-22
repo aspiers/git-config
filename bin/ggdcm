@@ -2,8 +2,25 @@
 
 # git diff check multiple
 
+me=`basename $0`
+
+if [ -z "$1" ]; then
+    echo "Usage: $me [commit range]" >&2
+    exit 1
+fi
+
+
 gglh --reverse "$@" | while read sha1; do
-  ggll -n1 $sha1
-  echo
-  ggdc $sha1
+  if ggdc $sha1^ $sha1 >/dev/null; then
+    echo "$sha1 has no whitespace errors"
+    continue
+  fi
+
+  (
+    git --no-pager log -n1 --color $sha1
+    echo
+    echo ggdc --color $sha1^ $sha1
+    ggdc --color $sha1^ $sha1
+  ) | less
+  echo ----------------------------------------------------------------------
 done
