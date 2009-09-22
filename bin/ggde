@@ -4,4 +4,8 @@ if [ "$1" = '--help' ]; then
     exec git describe "$@"
 fi
 
-exec git describe --all "$@"
+if desc=$( git describe --all "$@" 2>/dev/null ); then
+    echo "${desc#heads/}"
+else
+    git describe --all --contains "$@" 2>/dev/null
+fi
