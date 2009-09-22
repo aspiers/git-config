@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # git diff check multiple
 
@@ -9,23 +9,26 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-found_errors=0
+error_count=0
 
-gglh --reverse "$1" | while read sha1; do
+while read sha1; do
   if ggdc $sha1^ $sha1 >/dev/null; then
-    echo "$sha1 has no whitespace errors"
+    echo "`ggde $sha1` has no whitespace errors"
     continue
   fi
 
-  : $(( found_errors++ ))
+  : $(( error_count++ ))
+  echo "error_count now $error_count"
 
   (
-    git --no-pager log -n1 --color $sha1
+    git --no-pager log -n1 --color $sha1 | git name-rev --stdin
     echo
     echo ggdc --color $sha1^ $sha1
     ggdc --color $sha1^ $sha1
   ) | less
   echo ----------------------------------------------------------------------
-done
+done < <( gglh --reverse "$1" )
+# http://nion.modprobe.de/blog/archives/531-Altering-a-variable-outside-the-scope-of-a-loop-influenced-by-a-subshell.html
 
-exit $found_errors
+echo "Commits with whitespace errors: $error_count"
+exit $error_count
