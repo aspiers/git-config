@@ -25,7 +25,7 @@ while read sha1; do
     echo
     echo ggdc --color $sha1^ $sha1
     ggdc --color $sha1^ $sha1
-  ) | less
+  ) | less -F
   echo ----------------------------------------------------------------------
 done < <( gglh --reverse "$1" )
 # http://nion.modprobe.de/blog/archives/531-Altering-a-variable-outside-the-scope-of-a-loop-influenced-by-a-subshell.html
