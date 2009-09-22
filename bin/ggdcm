@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# git diff check multiple
+
+gglh --reverse "$@" | while read sha1; do
+  ggll -n1 $sha1
+  echo
+  ggdc $sha1
+done
