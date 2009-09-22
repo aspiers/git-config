@@ -39,9 +39,21 @@ fi
 
 exec 3>&0 # save STDIN tty
 grep -v '^ *#' "$conf" | while read -a args; do
+    range="${args[0]}..${args[1]}"
+    echo "Checking for whitespace errors in $range"
+    if ! ggdcm "$range"; then
+        echo -n "Hit enter to continue regardless ... "
+        read <&3
+        echo
+    fi
+
     echo "git rebase ${args[*]}"
     if ! git rebase "${args[@]}"; then
         echo "Fix git rebase ${args[@]} and exit shell to continue"
         bash <&3
     fi
+    echo -n "git rebase ${args[*]} done; hit enter to continue ... "
+    read <&3
+    echo
+    echo ======================================================================
 done
