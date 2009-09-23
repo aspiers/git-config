@@ -23,7 +23,6 @@ while read sha1; do
   (
     git --no-pager log -n1 --color $sha1 | git name-rev --stdin
     echo
-    echo ggdc --color $sha1^ $sha1
     ggdc --color $sha1^ $sha1
   ) | less -F
   echo ----------------------------------------------------------------------
