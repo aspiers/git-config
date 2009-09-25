@@ -47,11 +47,13 @@ grep -v '^ *#' "$conf" | while read -a args; do
         echo
     fi
 
+    echo
     echo "git rebase ${args[*]}"
     if ! git rebase "${args[@]}"; then
         echo "Fix git rebase ${args[@]} and exit shell to continue"
         bash <&3
     fi
+    echo
     echo -n "git rebase ${args[*]} done; hit enter to continue ... "
     read <&3
     echo
