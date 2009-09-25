@@ -13,7 +13,7 @@ error_count=0
 
 while read sha1; do
   if ggdc $sha1^ $sha1 >/dev/null; then
-    echo "`ggde $sha1` has no whitespace errors"
+    echo "`git describe --all --contains $sha1` has no whitespace errors"
     continue
   fi
 
