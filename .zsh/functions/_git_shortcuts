@@ -14,6 +14,7 @@ case "$service" in
   ggco) git_fn=checkout  ;;
   ggd)  git_fn=diff      ;;
 #  ggde) git_fn=describe  ;;
+  ggk)  git_fn=log       ;;
   ggl)  git_fn=log       ;;
   ggmv) git_fn=mv        ;;
   ggr)  git_fn=reset     ;;
