@@ -37,6 +37,8 @@ elif [ "$#" -eq 0 ]; then
     conf="$root/.git/topic-branches"
 fi
 
+orig_head=`git head`
+
 exec 3>&0 # save STDIN tty
 grep -v '^ *#' "$conf" | while read -a args; do
     range="${args[0]}..${args[1]}"
@@ -54,8 +56,19 @@ grep -v '^ *#' "$conf" | while read -a args; do
         bash <&3
     fi
     echo
-    echo -n "git rebase ${args[*]} done; hit enter to continue ... "
-    read <&3
+    if true; then
+        echo -n "git rebase ${args[*]} done"
+    else
+        echo -n "git rebase ${args[*]} done; hit enter to continue ... "
+        read <&3
+    fi
     echo
     echo ======================================================================
 done
+
+if [ -n "$orig_head" ]; then
+    echo "Checking out original HEAD ($orig_head) ... "
+    git checkout "$orig_head"
+else
+    echo "WARNING: Couldn't determine original HEAD; current HEAD is probably different".
+fi
