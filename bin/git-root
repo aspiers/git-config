@@ -3,7 +3,7 @@
 # shows absolute path to parent of .git directory
 # (i.e. the working directory)
 
-git_dir=`git rev-parse --git-dir`
+git_dir=`git rev-parse --git-dir` || exit 1
 
 if [ "$git_dir" = '.git' ]; then
     pwd
