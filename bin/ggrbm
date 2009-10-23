@@ -27,14 +27,24 @@ if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
     usage
 fi
 
+root="`git root`"
+if [ -z "$root" ]; then
+    echo "$me: git root failed; aborting" >&2
+    exit 1
+fi
+
 if [ "$#" -gt 1 ]; then
     usage
 elif [ "$#" -eq 1 ]; then
     conf="$1"
     shift
 elif [ "$#" -eq 0 ]; then
-    root=`git root`
     conf="$root/.git/topic-branches"
+fi
+
+if [ -e "$root/.git/rebase-apply" ]; then
+    echo "$me: rebase already in progress! aborting." >&2
+    exit 1
 fi
 
 orig_head=`git head`
@@ -51,12 +61,16 @@ grep -v '^ *#' "$conf" | while read -a args; do
 
     echo
     echo "git rebase ${args[*]}"
+    rebase_had_issues=
     if ! git rebase "${args[@]}"; then
-        echo "Fix git rebase ${args[@]} and exit shell to continue"
-        bash <&3
+        rebase_had_issues=y
+        while [ -e "$root/.git/rebase-apply" ]; do
+            echo "Fix git rebase ${args[@]} via git rebase --continue / --abort then exit shell."
+            bash <&3
+        done
     fi
     echo
-    if true; then
+    if [ -z "$rebase_had_issues" ]; then
         echo -n "git rebase ${args[*]} done"
     else
         echo -n "git rebase ${args[*]} done; hit enter to continue ... "
