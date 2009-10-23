@@ -65,7 +65,9 @@ grep -v '^ *#' "$conf" | while read -a args; do
     if ! git rebase "${args[@]}"; then
         rebase_had_issues=y
         while [ -e "$root/.git/rebase-apply" ]; do
-            echo "Fix git rebase ${args[@]} via git rebase --continue / --abort then exit shell."
+            echo
+            echo "git rebase ${args[@]} not completed."
+            echo "Please fix via git rebase --continue / --abort then exit shell."
             bash <&3
         done
     fi
