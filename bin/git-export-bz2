@@ -1,0 +1,3 @@
+#!/bin/sh
+
+git archive "$@" | bzip2 -c
