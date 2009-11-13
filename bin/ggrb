@@ -4,4 +4,9 @@ if [ "$1" = '--help' ]; then
     exec git rebase "$@"
 fi
 
+if [ $# -eq 0 ]; then
+    # default to rebasing against upstream
+    set `ggup`
+fi
+
 exec git rebase -i "$@"
