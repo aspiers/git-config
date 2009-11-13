@@ -29,7 +29,7 @@ fi
 
 root="`git root`"
 if [ -z "$root" ]; then
-    echo "$me: git root failed; aborting" >&2
+    echo "git root failed; aborting" >&2
     exit 1
 fi
 
@@ -44,6 +44,11 @@ fi
 
 if [ -e "$root/.git/rebase-apply" ]; then
     echo "$me: rebase already in progress! aborting." >&2
+    exit 1
+fi
+
+if ! [ -e "$conf" ]; then
+    echo "$conf not found; aborting" >&2
     exit 1
 fi
 
