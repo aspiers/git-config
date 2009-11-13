@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# git Outgoing
+
+root="`git root`"
+if [ -d "$root/.git/svn" ]; then
+    upstream=trunk
+else
+    upstream=origin
+fi
+
+if ! git rev-parse "$upstream" >/dev/null 2>&1; then
+    echo "Couldn't figure out upstream ref; aborting." >&2
+    exit 1
+fi
+
+exec git log "$@" "$upstream"..HEAD
