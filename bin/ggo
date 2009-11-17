@@ -2,4 +2,8 @@
 
 # git Outgoing
 
-exec git log "$@" "`ggup`"..HEAD
+upstream="`ggup`" || exit 1  # ggup will display the error
+
+echo -e "Upstream is $upstream\n"
+
+exec git log "$@" "$upstream"..HEAD
