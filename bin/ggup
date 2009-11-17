@@ -14,8 +14,9 @@ if [ -d "$root/.git/svn" ]; then
                     print $u
                 }'
         )
+    # Need to apply refspec transformation;
     #svn_branches_map=$( git config svn-remote.svn.branches )
-    # For now we just assume standard layout
+    # for now we just assume standard layout and cheat.
     upstream=remotes/${svn_branch#branches/}
 else
     upstream=$(git config "branch.`git head`.remote")
