@@ -4,7 +4,19 @@
 
 root="`git root`"
 if [ -d "$root/.git/svn" ]; then
-    upstream=trunk
+    svn_branch=$(
+        git svn info | \
+            perl -lne '
+                /^URL: (.+)/ and $u = $1;
+                if (/^Repository Root: (.+)/) {
+                    $r = $1;
+                    $u =~ s!\Q$r/!!;
+                    print $u
+                }'
+        )
+    #svn_branches_map=$( git config svn-remote.svn.branches )
+    # For now we just assume standard layout
+    upstream=remotes/${svn_branch#branches/}
 else
     upstream=$(git config "branch.`git head`.remote")
     if [ -z "$upstream" ]; then
