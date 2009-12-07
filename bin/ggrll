@@ -6,4 +6,4 @@ fi
 
 ref="${1:-HEAD}"
 
-exec ggl -g --abbrev-commit --pretty=oneline "$ref@{now}"
+exec ggl -g --abbrev-commit "$ref@{now}"
