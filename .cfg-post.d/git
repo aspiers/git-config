@@ -13,6 +13,11 @@ fi
 
 git config --global color.ui auto
 
+# Paging
+#git config --global core.pager $PAGER
+git config --global color.pager true
+git config --global pager.diff-tree true
+
 ##############################################################################
 # set up .gitignore from .cvsignore
 
