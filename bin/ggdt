@@ -1,3 +1,4 @@
 #!/bin/sh
 
-exec git diff-tree --color -p "$@"
+[ -t 1 ] && args=--color
+exec git diff-tree -p $args "$@"
