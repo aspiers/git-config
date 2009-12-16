@@ -1,3 +1,9 @@
 #!/bin/sh
 
-exec git log --color --decorate --pretty=oneline --abbrev-commit "$@"
+# http://www.jukie.net/~bart/blog/pimping-out-git-log
+# Thanks Bart ;-)
+
+LESS="$LESS -S"
+exec git log --graph --color --decorate --abbrev-commit --date=relative \
+    --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' \
+    "$@"
