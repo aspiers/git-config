@@ -3,7 +3,19 @@
 # http://www.jukie.net/~bart/blog/pimping-out-git-log
 # Thanks Bart ;-)
 
+me=`basename $0`
+
+version="`git --version | awk '{print \$3}'`"
+case "$version" in
+    1.[0-5].*|1.6.0.*) dec="" ;;
+    1.6.[2-9].*) dec="%C(yellow)%d%Creset" ;;
+    *)
+        echo "FIXME: add support for git $version to $me" >&2
+        exit 1
+        ;;
+esac
+
 LESS="$LESS -S"
 exec git log --graph --color --decorate --abbrev-commit --date=relative \
-    --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' \
+    --pretty=format:"%Cred%h%Creset -$dec %s %Cgreen(%cr)%Creset" \
     "$@"
