@@ -1,3 +1,7 @@
 #!/bin/sh
 
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+    exec git gui "$1"
+fi
+
 git gui blame "$@" &
