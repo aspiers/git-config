@@ -1,9 +1,5 @@
 #!/bin/sh
 
-if [ "$1" = '--help' ]; then
-    exec git reflog "$@"
-fi
-
 ref="${1:-HEAD}"
 
-exec ggl -g --abbrev-commit --pretty=oneline "$ref@{now}"
+exec ggrln "$ref@{now}"
