@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Diff Tree --stat
+
+[ -t 1 ] && args=--color
+exec git diff-tree --stat $args "$@"
