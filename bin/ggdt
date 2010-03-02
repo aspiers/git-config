@@ -1,4 +1,10 @@
 #!/bin/sh
 
 [ -t 1 ] && args=--color
+
+if [ -z "$1" ]; then
+    upstream="`ggup`" || exit 1  # ggup will display the error
+    set -- "$upstream"..HEAD
+fi
+
 exec git diff-tree -p $args "$@"

@@ -2,4 +2,9 @@
 
 # Diff Tree Names only
 
+if [ -z "$1" ]; then
+    upstream="`ggup`" || exit 1  # ggup will display the error
+    set -- "$upstream"..HEAD
+fi
+
 exec git diff-tree --name-status -r "$@"
