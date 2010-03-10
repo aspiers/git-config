@@ -2,10 +2,22 @@
 
 # git upstream - figure out ref of upstream branch
 
-root="`git root`"
-if [ -d "$root/.git/svn" ]; then
+get_svn_upstream () {
+    root="`git root`"
+    if ! [ -d "$root/.git/svn" ]; then
+        return 1
+    fi
+
+    if ! svn_info=$( git svn info 2>&1 ); then
+        return 1
+    fi
+
+    if echo "$svn_info" | grep -q 'Unable to determine upstream SVN info'; then
+        return 1
+    fi
+
     svn_branch=$(
-        git svn info | \
+        echo "$svn_info" |
             perl -lne '
                 /^URL: (.+)/ and $u = $1;
                 if (/^Repository Root: (.+)/) {
@@ -13,19 +25,33 @@ if [ -d "$root/.git/svn" ]; then
                     $u =~ s!\Q$r/!!;
                     print $u
                 }'
-        )
+    )
     # Need to apply refspec transformation;
     #svn_branches_map=$( git config svn-remote.svn.branches )
     # for now we just assume standard layout and cheat.
-    upstream=remotes/${svn_branch#branches/}
-else
-    upstream=$(git config "branch.`git head`.remote")
-    if [ -z "$upstream" ]; then
-        upstream=origin
+    upstream="remotes/${svn_branch#branches/}"
+    return 0
+}
+
+get_upstream () {
+    localhead="`git head`"
+    upstream=$(git config "branch.$localhead.remote")
+    if [ -n "$upstream" ]; then
+        upstream="$upstream/$localhead"
+        return
     fi
-fi
+
+    if ! get_svn_upstream; then
+        # Need to apply refspec transformation; for now we just guess
+        # that the local and remote branches have the same name.
+        upstream=origin/$localhead
+    fi
+}
+
+get_upstream
 
 if ! git rev-parse "$upstream" >/dev/null 2>&1; then
+    echo "Best guess '$upstream' was invalid."
     echo "Couldn't figure out upstream ref; aborting." >&2
     exit 1
 fi
