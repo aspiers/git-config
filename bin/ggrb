@@ -6,7 +6,11 @@ fi
 
 if [ $# -eq 0 ]; then
     # default to rebasing against upstream
-    set `ggup`
+    if upstream="$( ggup )"; then
+        set "$upstream"
+    else
+        exit 1
+    fi
 fi
 
 exec git rebase -i "$@"
