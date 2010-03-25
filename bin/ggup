@@ -8,6 +8,14 @@ get_svn_upstream () {
         return 1
     fi
 
+    if [ `ls "$root/.git/svn" | wc -l` == 1 ]; then
+        if upstream=`cd $root/.git/svn && ls`; then
+            return 0
+        else
+            echo "WARNING: cd $root/.git/svn && ls failed" >&2
+        fi
+    fi
+
     if ! svn_info=$( git svn info 2>&1 ); then
         return 1
     fi
@@ -34,16 +42,24 @@ get_svn_upstream () {
 }
 
 get_upstream () {
+    # If the upstream is explicitly specified in config, we honor that.
     localhead="`git head`"
-    upstream=$(git config "branch.$localhead.remote")
+    remotebranchconf="branch.$localhead.remote"
+    upstream=$(git config "$remotebranchconf")
     if [ -n "$upstream" ]; then
-        upstream="$upstream/$localhead"
+        if ! git rev-parse "$upstream" >/dev/null 2>&1; then
+            echo "$remotebranchconf specified invalid ref '$upstream'" >&2
+            exit 1
+        fi
         return
     fi
 
     if ! get_svn_upstream; then
         # Need to apply refspec transformation; for now we just guess
-        # that the local and remote branches have the same name.
+        # that the upstream was a git repository, and that the local
+        # and remote branches have the same name.  'origin' is just
+        # the name that git uses by default to refer to the
+        # repository that you cloned from.
         upstream=origin/$localhead
     fi
 }
@@ -51,8 +67,14 @@ get_upstream () {
 get_upstream
 
 if ! git rev-parse "$upstream" >/dev/null 2>&1; then
-    echo "Best guess '$upstream' was invalid."
-    echo "Couldn't figure out upstream ref; aborting." >&2
+    cat <<EOF >&2
+Best guess '$upstream' was invalid.
+Maybe you should do:
+
+   git config branch.$localhead.remote \$remote
+
+Couldn't figure out upstream ref; aborting.
+EOF
     exit 1
 fi
 
