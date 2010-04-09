@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+#
+# Convert output of svn propget [--xml] -R svn:ignore
+# into .git/info/exclude format.
+#
+# N.B. when fed plain text, assumes that neither files nor ignore
+# values contain the string ' - '.  The only way to handle this
+# accurately is via --xml.
+
+use strict;
+use warnings;
+
+sub parse_text {
+  my ($in) = @_;
+  my @chunks = sort split /(?:\A|\n\n)(?=^\S+.* - )/m, $in;
+
+  foreach my $i (0 .. $#chunks) {
+    my $chunk = $chunks[$i];
+    my ($dir, $ignores) = $chunk =~ /^(.+?) - (.+)/s;
+    if (! defined $ignores) {
+      print "weird chunk: [$chunk]\n";
+      next;
+    }
+
+    output_chunk($dir, $ignores);
+
+    print "\n" unless $i == $#chunks;
+  }
+}
+
+sub output_chunk {
+  my ($dir, $ignores) = @_;
+  $dir = $dir =~ /^\.?$/ ? '' : "/$dir";
+
+  print "# $dir/\n";
+  foreach my $ignore (split /\n/, $ignores) {
+    print "$dir/$ignore\n";
+  }
+}
+
+sub parse_XML {
+  eval {
+    require XML::Simple;
+    import XML::Simple;
+  };
+  if ($@) {
+    die "Need XML::Simple installed to be able to parse XML form\n";
+  }
+
+  my ($in) = @_;
+
+  my $xml = XMLin($in);
+  die "XML Parse didn't look as expected"
+    unless $xml->{target} and ref($xml->{target}) eq 'ARRAY';
+  my @chunks = sort { $a->{path} cmp $b->{path} } @{ $xml->{target} };
+  for my $i (0 ..$#chunks) {
+    my $chunk = $chunks[$i];
+    chomp (my $ignore = $chunk->{property}{content});
+    output_chunk($chunk->{path}, $ignore);
+    print "\n" unless $i == $#chunks;
+  }
+}
+
+undef $/;
+my $in = join '', <>;
+$in =~ /^<\?xml/ ? parse_XML($in) : parse_text($in);
