@@ -55,8 +55,13 @@ sub parse_XML {
   my @chunks = sort { $a->{path} cmp $b->{path} } @{ $xml->{target} };
   for my $i (0 ..$#chunks) {
     my $chunk = $chunks[$i];
+    my $path = $chunk->{path};
     chomp (my $ignore = $chunk->{property}{content});
-    output_chunk($chunk->{path}, $ignore);
+    if (! defined $ignore) {
+      warn "Warning: 'svn:ignore' not under version control for $path\n";
+      next;
+    }
+    output_chunk($path, $ignore);
     print "\n" unless $i == $#chunks;
   }
 }
