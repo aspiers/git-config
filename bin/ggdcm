@@ -4,9 +4,17 @@
 
 me=`basename $0`
 
-if [ "$#" -ne 1 ]; then
+if [ $# -gt 1 ]; then
     echo "Usage: $me [commit range]" >&2
     exit 1
+fi
+
+if [ $# -eq 0 ]; then
+    range="`ggup`..HEAD"
+    echo "Checking $range"
+    echo
+else
+    range="$1"
 fi
 
 error_count=0
@@ -26,7 +34,7 @@ while read sha1; do
     ggdc --color $sha1^ $sha1
   ) | less -F
   echo ----------------------------------------------------------------------
-done < <( gglh --reverse "$1" )
+done < <( gglh --reverse "$range" )
 # http://nion.modprobe.de/blog/archives/531-Altering-a-variable-outside-the-scope-of-a-loop-influenced-by-a-subshell.html
 
 echo "Commits with whitespace errors: $error_count"
