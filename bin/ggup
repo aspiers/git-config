@@ -3,7 +3,6 @@
 # git upstream - figure out ref of upstream branch
 
 get_svn_upstream () {
-    root="`git root`"
     if ! [ -d "$root/.git/svn" ]; then
         return 1
     fi
@@ -63,6 +62,11 @@ get_upstream () {
         upstream=origin/$localhead
     fi
 }
+
+root="`git root`"
+if ! [ -d "$root" ]; then
+    exit 1
+fi
 
 get_upstream
 
