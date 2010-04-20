@@ -46,11 +46,15 @@ get_upstream () {
     remotebranchconf="branch.$localhead.remote"
     upstream=$(git config "$remotebranchconf")
     if [ -n "$upstream" ]; then
-        if ! git rev-parse "$upstream" >/dev/null 2>&1; then
-            echo "$remotebranchconf specified invalid ref '$upstream'" >&2
-            exit 1
+        if git rev-parse "$upstream" >/dev/null 2>&1; then
+            return
         fi
-        return
+        upstream="$upstream/$localhead"
+        if git rev-parse "$upstream" >/dev/null 2>&1; then
+            return
+        fi
+        echo "Couldn't determine upstream branch from $remotebranchconf = $upstream" >&2
+        exit 1
     fi
 
     if ! get_svn_upstream; then
