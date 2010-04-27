@@ -8,7 +8,7 @@ me=`basename $0`
 version="`git --version | awk '{print \$3}'`"
 case "$version" in
     1.[0-5].*|1.6.0.*) dec="" ;;
-    1.6.[2-9].*) dec="%C(yellow)%d%Creset" ;;
+    1.6.[2-9].*|1.7.*) dec="%C(yellow)%d%Creset" ;;
     *)
         echo "FIXME: add support for git $version to $me" >&2
         exit 1
