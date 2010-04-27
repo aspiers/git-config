@@ -30,6 +30,13 @@ get_svn_upstream () {
                 if (/^Repository Root: (.+)/) {
                     $r = $1;
                     $u =~ s!\Q$r/!!;
+
+                    # This bit required since git svn info changed to including
+                    # the subpath of the cwd in the URL (somewhere in between 1.6.0
+                    # and 1.7.1):
+                    ($subdir = `git prefix`) =~ s!/\n$!!;
+                    $u =~ s!/$subdir$!!; 
+
                     print $u
                 }'
     )
