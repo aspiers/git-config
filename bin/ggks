@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ggk --simplify-by-decoration "$@"
