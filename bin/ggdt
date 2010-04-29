@@ -1,5 +1,9 @@
 #!/bin/sh
 
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+    exec git diff-tree "$@"
+fi
+
 [ -t 1 ] && args=--color
 
 if [ -z "$1" ]; then
