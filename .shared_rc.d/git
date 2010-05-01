@@ -1,1 +1,1 @@
-export GIT_PAGER="less $LESS -F"
+export GIT_PAGER="less $LESS -FS"
