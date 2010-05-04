@@ -16,7 +16,8 @@ case "$GIT_PAGER_MODE" in
         git_pager_regexp='^[0-9a-f]{7}[0-9a-f]*'
         ;;
     default|"")
-        git_pager_regexp='^(commit [0-9a-f]{7}.*|diff .*|[0-9a-f]{7}[0-9a-f]*)'
+        #git_pager_regexp='^(commit [0-9a-f]{7}.*|diff .*|[0-9a-f]{7}[0-9a-f]*)'
+        unset git_pager_regexp
         ;;
     none)
         unset git_pager_regexp
