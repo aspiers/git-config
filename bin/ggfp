@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ "$1" = '--help' ]; then
+    exec git format-patch "$@"
+fi
+
+exec git format-patch "$@"
