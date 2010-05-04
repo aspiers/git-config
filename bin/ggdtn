@@ -7,4 +7,5 @@ if [ -z "$1" ]; then
     set -- "$upstream"..HEAD
 fi
 
+. $ZDOTDIR/.shared_rc.d/git none
 exec git diff-tree --name-status -r "$@"

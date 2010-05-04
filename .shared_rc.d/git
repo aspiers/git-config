@@ -1,1 +1,26 @@
-export GIT_PAGER="less $LESS -FS +/'^(commit|diff) .*'"
+#!/bin/bash
+
+export GIT_PAGER="less $LESS -F -S"
+GIT_PAGER="${GIT_PAGER/ -j[0-9] / }"
+GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
+GIT_PAGER="${GIT_PAGER/ -a / }"
+
+case "${1:-$GIT_PAGER_MODE}" in
+    log)
+        git_pager_regexp='^commit [0-9a-f]{7}.*'
+        ;;
+    diff)
+        git_pager_regexp='^diff .*'
+        ;;
+    oneline)
+        git_pager_regexp='^[0-9a-f]{7}[0-9a-f]*'
+        ;;
+    default|"")
+        git_pager_regexp='^(commit [0-9a-f]{7}.*|diff .*|[0-9a-f]{7}[0-9a-f]*)'
+        ;;
+    none)
+        unset git_pager_regexp
+        ;;
+esac
+
+[ -n "$git_pager_regexp" ] && GIT_PAGER="$GIT_PAGER +/'$git_pager_regexp'"

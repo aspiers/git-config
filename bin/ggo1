@@ -1,3 +1,4 @@
 #!/bin/sh
 
-exec ggo --decorate --pretty=oneline --abbrev-commit "$@"
+export GIT_PAGER_MODE=oneline
+ggo --decorate --pretty=oneline --abbrev-commit "$@"

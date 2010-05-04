@@ -11,4 +11,5 @@ if [ -z "$1" ]; then
     set -- "$upstream"..HEAD
 fi
 
+. $ZDOTDIR/.shared_rc.d/git diff
 exec git diff-tree -p $args "$@"

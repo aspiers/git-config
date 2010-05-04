@@ -2,4 +2,5 @@
 
 # git Outgoing --stat
 
-exec ggo --stat "$@"
+export GIT_PAGER_MODE=log
+ggo --stat "$@"
