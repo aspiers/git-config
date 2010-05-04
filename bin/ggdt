@@ -11,5 +11,6 @@ if [ -z "$1" ]; then
     set -- "$upstream"..HEAD
 fi
 
-. $ZDOTDIR/.shared_rc.d/git diff
+export GIT_PAGER_MODE=diff
+. $ZDOTDIR/.shared_rc.d/git
 exec git diff-tree -p $args "$@"
