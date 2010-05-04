@@ -55,7 +55,7 @@ fi
 orig_head=`git head`
 
 exec 3>&0 # save STDIN tty
-grep -v '^ *#' "$conf" | while read -a args; do
+egrep -v '^ *(#|$)' "$conf" | while read -a args; do
     range="${args[0]}..${args[1]}"
     echo "Checking for whitespace errors in $range"
     if ! ggdcm "$range"; then
