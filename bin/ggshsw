@@ -4,4 +4,4 @@ if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
     exec git show "$@"
 fi
 
-exec git show --stat=120,140 --color "$@"
+exec ggsh --stat=120,140 --color "$@"

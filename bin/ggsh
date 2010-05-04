@@ -1,3 +1,5 @@
 #!/bin/sh
 
+export GIT_PAGER_MODE=none
+. $ZDOTDIR/.shared_rc.d/git
 exec git show "$@"
