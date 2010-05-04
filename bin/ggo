@@ -11,14 +11,17 @@ if [ -z "$GIT_PAGER_MODE" ]; then
     # not being set via a caller such as ggo1 etc.
     # so choose according to the output format which
     # we know we can expect from git log
-    . $ZDOTDIR/.shared_rc.d/git log
+    export GIT_PAGER_MODE=log
 else
     # honour the caller's setting
-    . $ZDOTDIR/.shared_rc.d/git "$GIT_PAGER_MODE"
+    :
 fi
+
+. $ZDOTDIR/.shared_rc.d/git
 
 git log "$@" "$upstream"..HEAD
 
 #echo "GIT_PAGER was [$GIT_PAGER]"
 
-. $ZDOTDIR/.shared_rc.d/git default
+export GIT_PAGER_MODE=default
+. $ZDOTDIR/.shared_rc.d/git

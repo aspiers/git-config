@@ -5,8 +5,7 @@ GIT_PAGER="${GIT_PAGER/ -j[0-9] / }"
 GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
 GIT_PAGER="${GIT_PAGER/ -a / }"
 
-mode="${1:-$GIT_PAGER_MODE}"
-case "$mode" in
+case "$GIT_PAGER_MODE" in
     log)
         git_pager_regexp='^commit [0-9a-f]{7}.*'
         ;;
@@ -23,8 +22,7 @@ case "$mode" in
         unset git_pager_regexp
         ;;
     *)
-        echo "ERROR: unrecognised git pager mode [$mode]" >&2
-        exit 1
+        echo "ERROR: unrecognised value for GIT_PAGER_MODE [$GIT_PAGER_MODE]" >&2
         ;;
 esac
 
