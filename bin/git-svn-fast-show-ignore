@@ -1,0 +1,38 @@
+#!/bin/bash
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me SVN-WORKING-DIR
+EOF
+    exit "$exit_code"
+}
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    usage 0
+fi
+
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+svn_wd="$1"
+
+# if ! [ -d .git/info ]; then
+#     echo "Must be run from top of git working tree." >&2
+#     exit 1
+# fi
+
+( cd "$svn_wd" && svn propget svn:ignore --xml -R . ) | svnignore2gitexclude
