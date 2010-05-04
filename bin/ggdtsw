@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+    exec git diff-tree "$@"
+fi
+
+exec ggdts --stat=120,140 --color "$@"
