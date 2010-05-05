@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# git Outgoing -p
+
+ggo -p "$@"
