@@ -4,4 +4,7 @@ if [ "$1" = '--help' ]; then
     exec git log "$@"
 fi
 
+export GIT_PAGER_MODE=log
+. $ZDOTDIR/.shared_rc.d/git
+
 exec git log --color --decorate "$@"
