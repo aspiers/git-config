@@ -12,6 +12,9 @@ case "$GIT_PAGER_MODE" in
     diff)
         git_pager_regexp='^diff .*'
         ;;
+    commit)
+        git_pager_regexp='^(commit [0-9a-f]{7}.*|diff .*)'
+        ;;
     oneline)
         git_pager_regexp='^[0-9a-f]{7}[0-9a-f]*'
         ;;
