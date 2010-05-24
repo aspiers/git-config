@@ -1,5 +1,6 @@
 #!/bin/sh
 
-export GIT_PAGER_MODE=none
+export GIT_PAGER_MODE=commit
 . $ZDOTDIR/.shared_rc.d/git
+
 exec git show "$@"
