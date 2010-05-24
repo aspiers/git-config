@@ -4,6 +4,9 @@ if [ "$1" = '--help' ]; then
     exec git reflog "$@"
 fi
 
+export GIT_PAGER_MODE=none
+. $ZDOTDIR/.shared_rc.d/git
+
 ref="${1:-HEAD}"
 
-exec ggl -g --abbrev-commit --pretty=oneline "$ref"
+exec git log --color --decorate -g --abbrev-commit --pretty=oneline "$ref"
