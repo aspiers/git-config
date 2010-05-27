@@ -1,6 +1,15 @@
 #!/bin/sh
 
-export GIT_PAGER_MODE=commit
+type=`git cat-file -t "$1"`
+case "$type" in
+    blob)
+        export GIT_PAGER_MODE=none
+        ;;
+    commit)
+        export GIT_PAGER_MODE=commit
+        ;;
+esac
+        
 . $ZDOTDIR/.shared_rc.d/git
 
 exec git show "$@"
