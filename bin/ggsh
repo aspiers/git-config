@@ -1,6 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-type=`git cat-file -t "${1:-HEAD}"`
+type=commit
+for (( i = 1; i <= $#; i++ )); do
+    val="${!i}"
+    case "$val" in
+        -*) :
+            #echo "Ignoring option $val"
+            ;;
+        *)
+            type=`git cat-file -t "$val"`
+            #echo "Type of $val is $type"
+            break
+            ;;
+    esac
+done
+
 case "$type" in
     blob)
         export GIT_PAGER_MODE=none
@@ -12,4 +26,5 @@ esac
         
 . $ZDOTDIR/.shared_rc.d/git
 
+#echo git show "$@"
 exec git show "$@"
