@@ -1,6 +1,6 @@
 #!/bin/sh
 
-type=`git cat-file -t "$1"`
+type=`git cat-file -t "${1:-HEAD}"`
 case "$type" in
     blob)
         export GIT_PAGER_MODE=none
