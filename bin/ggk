@@ -1,3 +1,8 @@
 #!/bin/sh
 
-exec gitk --all "$@" &
+if [ -z "$1" ]; then
+    exec gitk --all "$@" &
+else
+    exec gitk "$@" &
+fi
+
