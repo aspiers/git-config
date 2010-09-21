@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if ! which git >&/dev/null; then
     echo "git not found; aborting .cfg-post.d/git" >&2
