@@ -58,7 +58,7 @@ sub parse_XML {
     my $path = $chunk->{path};
     chomp (my $ignore = $chunk->{property}{content});
     if (! defined $ignore) {
-      warn "Warning: 'svn:ignore' not under version control for $path\n";
+      warn "Warning: 'svn:ignore' empty or not under version control for $path\n";
       next;
     }
     output_chunk($path, $ignore);
