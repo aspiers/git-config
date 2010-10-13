@@ -1,9 +1,10 @@
 #!/bin/bash
 
 export GIT_PAGER="less $LESS -F -S"
+
 GIT_PAGER="${GIT_PAGER/ -j[0-9] / }"
 GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
-GIT_PAGER="${GIT_PAGER/ -a / }"
+GIT_PAGER="${GIT_PAGER/-a / }"
 
 case "$GIT_PAGER_MODE" in
     log)
