@@ -1,0 +1,13 @@
+#!/bin/sh
+
+FIXME
+
+if [ "$GIT_COMMITTER_NAME" = "<Old Name>" ]; then
+    export GIT_COMMITTER_NAME="<New Name>"
+    export GIT_COMMITTER_EMAIL="<New Email>"
+    export GIT_AUTHOR_NAME="<New Name>"
+    export GIT_AUTHOR_EMAIL="<New Email>"
+fi
+
+# git filter-branch --env-filter '<shell>' $revrange
+
