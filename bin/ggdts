@@ -1,8 +1,17 @@
-#!/bin/sh
+#!/bin/bash
 
 # Diff Tree --stat
 
-[ -t 1 ] && args=--color
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+    exec git diff-tree "$@"
+fi
+
+args=()
+[ -t 1 ] && args=(--color "${args[@]}")
+if [[ "$1" == --stat* ]]; then
+    args=("$1" "${args[@]}")
+    shift
+fi
 
 if [ -z "$1" ]; then
     upstream="`ggup`" || exit 1  # ggup will display the error
@@ -11,4 +20,4 @@ fi
 
 export GIT_PAGER_MODE=none
 . $ZDOTDIR/.shared_rc.d/git
-exec git diff-tree --stat $args "$@"
+exec git diff-tree "${args[@]}" "$@"

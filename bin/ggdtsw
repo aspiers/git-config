@@ -1,7 +1,20 @@
-#!/bin/sh
+#!/bin/bash
+
+# Diff Tree --stat wide output
+
+exec ggdts --stat=120,140 "$@"
 
 if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
     exec git diff-tree "$@"
 fi
 
-exec ggdts --stat=120,140 --color "$@"
+[ -t 1 ] && args=--color
+
+if [ -z "$1" ]; then
+    upstream="`ggup`" || exit 1  # ggup will display the error
+    set -- "$upstream"..HEAD
+fi
+
+export GIT_PAGER_MODE=none
+. $ZDOTDIR/.shared_rc.d/git
+exec git diff-tree --stat=120,140 $args "$@" 
