@@ -4,4 +4,8 @@ if [ "$1" = '--help' ]; then
     exec git format-patch "$@"
 fi
 
+if [ $# = 0 ]; then
+    set -- "`ggup`..HEAD"
+fi
+
 exec git format-patch "$@"
