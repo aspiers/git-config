@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# git Outgoing -p color Words
+
+ggo -p --color-words "$@"
