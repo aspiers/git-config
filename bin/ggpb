@@ -2,4 +2,6 @@
 
 # pb == parent branch (although it will show a tag if it's closer)
 
-exec git describe --abbrev=0 --all HEAD^
+rev="${1:-HEAD}"
+
+exec git describe --abbrev=0 --all "$rev"^
