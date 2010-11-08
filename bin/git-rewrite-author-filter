@@ -2,13 +2,18 @@
 
 # N.B. this file is source'd by git-rewrite-author, not executed!
 
-if [ -z "$GIT_NEW_AUTHOR_EMAIL" ]; then
+if [ -z "$GIT_NEW_AUTHOR_EMAIL" ] &&
+   ! GIT_NEW_AUTHOR_EMAIL="`git config user.email`"; then
     cat <<EOF >&2
 
 You must set and export GIT_NEW_AUTHOR_EMAIL!
 For example,
 
   export GIT_NEW_AUTHOR_EMAIL="x@adamspiers.org"
+
+Or, just set user.email:
+
+  git config user.email x@adamspiers.org
 
 Aborting.
 EOF
@@ -18,7 +23,7 @@ fi
 if [ "$GIT_AUTHOR_NAME" = "Adam Spiers" ]; then
     #GIT_AUTHOR_NAME="Adam Spiers"
     GIT_AUTHOR_EMAIL="$GIT_NEW_AUTHOR_EMAIL"
-    #export GIT_AUTHOR_DATE="<New Date>"
+    #GIT_AUTHOR_DATE="<New Date>"
 # else
 #     echo "\$GIT_AUTHOR_NAME was $GIT_AUTHOR_NAME" >&2
 fi

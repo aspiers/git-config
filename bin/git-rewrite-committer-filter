@@ -2,13 +2,18 @@
 
 # N.B. this file is source'd by git-rewrite-committer, not executed!
 
-if [ -z "$GIT_NEW_COMMITTER_EMAIL" ]; then
+if [ -z "$GIT_NEW_COMMITTER_EMAIL" ] &&
+   ! GIT_NEW_COMMITTER_EMAIL="`git config user.email`"; then
     cat <<EOF >&2
 
 You must set and export GIT_NEW_COMMITTER_EMAIL!
 For example,
 
   export GIT_NEW_COMMITTER_EMAIL="x@adamspiers.org"
+
+Or, just set user.email:
+
+  git config user.email x@adamspiers.org
 
 Aborting.
 EOF
