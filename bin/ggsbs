@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# Git SuBmodule Summary
+
+exec git submodule summary "$@"
