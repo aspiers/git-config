@@ -3,7 +3,15 @@
 # N.B. this file is source'd by git-rewrite-committer, not executed!
 
 if [ -z "$GIT_NEW_COMMITTER_EMAIL" ]; then
-    echo -e "\nYou must set and export GIT_NEW_COMMITTER_EMAIL! Aborting." >&2
+    cat <<EOF >&2
+
+You must set and export GIT_NEW_COMMITTER_EMAIL!
+For example,
+
+  export GIT_NEW_COMMITTER_EMAIL="x@adamspiers.org"
+
+Aborting.
+EOF
     exit 1
 fi
 

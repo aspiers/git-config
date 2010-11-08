@@ -3,7 +3,15 @@
 # N.B. this file is source'd by git-rewrite-author, not executed!
 
 if [ -z "$GIT_NEW_AUTHOR_EMAIL" ]; then
-    echo -e "\nYou must set and export GIT_NEW_AUTHOR_EMAIL! Aborting." >&2
+    cat <<EOF >&2
+
+You must set and export GIT_NEW_AUTHOR_EMAIL!
+For example,
+
+  export GIT_NEW_AUTHOR_EMAIL="x@adamspiers.org"
+
+Aborting.
+EOF
     exit 1
 fi
 
