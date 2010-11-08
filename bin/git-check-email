@@ -1,10 +1,14 @@
 #!/bin/bash
 
-if ! git config user.email; then
+if ! git config user.email >/dev/null; then
     cat <<EOF >&2
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     WARNING: git user.email config variable is not set!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+You should type something like:
+
+  git config user.email x@adamspiers.org
 
 EOF
 fi
