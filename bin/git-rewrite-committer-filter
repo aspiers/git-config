@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# N.B. this file is source'd by git-rewrite-committer, not executed!
+
+if [ -z "$GIT_NEW_COMMITTER_EMAIL" ]; then
+    echo -e "\nYou must set and export GIT_NEW_COMMITTER_EMAIL! Aborting." >&2
+    exit 1
+fi
+
+if [ "$GIT_COMMITTER_NAME" = "Adam Spiers" ]; then
+    #GIT_COMMITTER_NAME="Adam Spiers"
+    GIT_COMMITTER_EMAIL="$GIT_NEW_COMMITTER_EMAIL"
+    #export GIT_COMMITTER_DATE="<New Date>"
+# else
+#     echo "\$GIT_COMMITTER_NAME was $GIT_COMMITTER_NAME" >&2
+fi
+
