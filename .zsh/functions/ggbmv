@@ -1,0 +1,63 @@
+#autoload
+
+me="$(print -P %N)"
+
+if [[ "$1" == "--help" ]]; then
+  cat <<EOF >&2
+Usage: $me [OPTION]... BRANCH
+Renames git branch BRANCH, allowing interactive editing of the new name.
+
+EOF
+#The following options are passed on to git-branch(1):
+#  -b, -u
+  return 0
+fi
+
+# opts=()
+# while getopts :bu opt; do
+#     if [[ $opt = "?" ]]; then
+#         print "$me: unrecognized option: -$OPTARG" >&2
+#         print "Try \`$me --help' for more information." >&2
+#         return 1
+#     fi
+#     opts=( "$opts[@]" "-$opt" )
+# done
+# (( OPTIND > 1 )) && shift $(( OPTIND - 1 ))
+
+if (( $# == 0 )); then
+  print "$me: missing branch argument"
+  return 1
+fi
+
+if (( $# > 1 )); then
+  print "$me: too many arguments"
+  return 1
+fi
+
+src="$1"
+
+if ! git rev-parse "$src" >&/dev/null; then
+  print "$me: $src is not a valid branch"
+  return 1
+fi
+
+dest="$src"
+vared -p 'New branch name: ' dest
+
+if [[ "$src" == "$dest" ]]; then
+  print "$me: no change in name"
+  return 1
+fi
+
+if git rev-parse "$dest" >&/dev/null; then
+  echo -n "$me: $dest already exists; replace? "
+  if ! read -q replace; then
+    echo "Aborted."
+    return 1
+  fi
+  git branch -M "$src" "$dest"
+else
+  git branch -m "$src" "$dest"
+fi
+
+

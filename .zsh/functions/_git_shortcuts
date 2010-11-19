@@ -8,22 +8,23 @@
 # when you hit TAB again it works.
 
 case "$service" in 
-  gga)  git_fn=add       ;;
-  ggb)  git_fn=branch    ;;
-  ggci) git_fn=commit    ;;
-  ggco) git_fn=checkout  ;;
-  ggd)  git_fn=diff      ;;
-#  ggde) git_fn=describe  ;;
-  ggk)  git_fn=log       ;;
-  ggl)  git_fn=log       ;;
-  ggmv) git_fn=mv        ;;
-  ggr)  git_fn=reset     ;;
-  ggrb) git_fn=rebase    ;;
-#  ggrl) git_fn=reflog    ;;
-#  ggrm) git_fn=rm        ;;
-  ggs)  git_fn=status    ;;
-#  ggsh) git_fn=show      ;;
-  ggt)  git_fn=tag       ;;
+  gga)   git_fn=add       ;;
+  ggb)   git_fn=branch    ;;
+  ggbmv) git_fn=branch    ;;
+  ggci)  git_fn=commit    ;;
+  ggco)  git_fn=checkout  ;;
+  ggd)   git_fn=diff      ;;
+#  ggde)  git_fn=describe  ;;
+  ggk)   git_fn=log       ;;
+  ggl)   git_fn=log       ;;
+  ggmv)  git_fn=mv        ;;
+  ggr)   git_fn=reset     ;;
+  ggrb)  git_fn=rebase    ;;
+#  ggrl)  git_fn=reflog    ;;
+#  ggrm)  git_fn=rm        ;;
+  ggs)   git_fn=status    ;;
+#  ggsh)  git_fn=show      ;;
+  ggt)   git_fn=tag       ;;
   *) echo "BUG in _git_shortcuts: $service not supported"; return 1 ;;
 esac
 
