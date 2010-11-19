@@ -1,4 +1,4 @@
-#compdef gga ggb ggci ggco ggd ggh ggk ggl ggmv ggr ggrb ggrl ggs ggt
+#compdef gga ggb ggbmv ggci ggco ggd ggh ggk ggl ggmv ggr ggrb ggrl ggs ggt
 
 # Note that as of 4.3.4 there is a bug in _git that the invocation of
 # _call_function to the helper function for the specific command (such
