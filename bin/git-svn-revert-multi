@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+
+my $format = "%-6s %-40s %s";
+
+my $log_header = <<EOF;
+Insert your description here.
+
+This commit reverts the following commits:
+
+EOF
+
+my $log = '';
+my $longest = 0;
+
+while (<>) {
+  my @F = split /\s+/, $_;
+  my $sha = $F[0];
+  my $show = `git show $sha`;
+  $show =~ m!git-svn-id: .+@(\d+)! or die "no svn rev for:\n$show";
+  my $svn_rev = $1;
+  my @lines = split /\n/, $show;
+  (my $first_log_line = $lines[4]) =~ s/^\s+//;
+  my $revert_line = sprintf $format, 'r' . $svn_rev, $sha, $first_log_line;
+  $longest = length $revert_line if length $revert_line > $longest;
+  print "$revert_line\n";
+  $log .= "$revert_line\n";
+  system "git revert --no-edit --no-commit $sha";
+  die "Failed to revert $sha; aborting.\n" if ($? > 0);
+}
+
+$log_header .= sprintf($format, qw(svn git summary)) . "\n";
+$log_header .= "-" x $longest . "\n";
+
+system qw(git commit --edit -m), $log_header . $log;
