@@ -29,13 +29,13 @@ sub usage {
   (my $ME = $0) =~ s,.*/,,;
 
   die <<EOUSAGE;
-Usage: $ME [options] REVERT-LIST
+Usage: $ME [options] REVERT-LIST [REVERT-LIST]
 Options:
   -h, --help           Show this help
   -m, --message=LOG    Specify a log message header
   -1, --single-commit  Don't generate individual commits for each revert.
 
-The file should contain a list of commits to revert, one per line.
+The file(s) should contain a list of commits to revert, one per line.
 (Other fields are permitted on each line following the commit id.)
 Each commit is reverted in turn via `git revert'.
 
@@ -57,6 +57,8 @@ GetOptions(
   'no-commit|n',
 ) or usage();
 usage() if $opts{help};
+usage("Do not redirect STDIN otherwise an interactive shell cannot be spawned.\n")
+  unless -t 0;
 
 my $format = "%-6s %-40s %s";
 
