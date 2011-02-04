@@ -1,4 +1,20 @@
 #!/usr/bin/env perl
+#
+# git-svn-revert-multi - revert a sequence of svn commits
+# Copyright (C) 2011 Adam Spiers
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use strict;
 use warnings;
@@ -17,10 +33,17 @@ Usage: $ME [options] REVERT-LIST
 Options:
   -h, --help           Show this help
   -m, --message=LOG    Specify a log message header
-  -n, --no-commit
+  -1, --single-commit  Don't generate individual commits for each revert.
 
 The file should contain a list of commits to revert, one per line.
-Other fields are permitted on each line following the commit id.
+(Other fields are permitted on each line following the commit id.)
+Each commit is reverted in turn via `git revert'.
+
+A log message is generated summarising the entire reversion.  If the
+--single-commit option is provided, the resulting changeset is
+committed with this log message; otherwise each revert is committed
+individually, and the log message is printed to STDOUT in case the user
+wants to use it when manually fixing up the history.
 EOUSAGE
 }
 
