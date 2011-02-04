@@ -1,9 +1,44 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+Getopt::Long::Configure('bundling');
+
+sub usage {
+  warn @_, "\n" if @_;
+
+  (my $ME = $0) =~ s,.*/,,;
+
+  die <<EOUSAGE;
+Usage: $ME [options] REVERT-LIST
+Options:
+  -h, --help           Show this help
+  -m, --message=LOG    Specify a log message header
+  -n, --no-commit
+
+The file should contain a list of commits to revert, one per line.
+Other fields are permitted on each line following the commit id.
+EOUSAGE
+}
+
+my %opts = (
+  message => 'Insert your description here.'
+);
+GetOptions(
+  \%opts,
+  'help|h',
+  'message|m=s',
+  'no-commit|n',
+) or usage();
+usage() if $opts{help};
+
 my $format = "%-6s %-40s %s";
 
 my $log_header = <<EOF;
-Insert your description here.
+$opts{message}
 
 This commit reverts the following commits:
 
@@ -14,7 +49,11 @@ my $longest = 0;
 
 while (<>) {
   my @F = split /\s+/, $_;
-  my $sha = $F[0];
+  my $commit = $F[0];
+  chomp (my $sha = `git rev-parse $commit`);
+  if ($? > 0) {
+    die "Failed to parse commit id \`$commit' on line $.; aborting!\n";
+  }
   my $show = `git show $sha`;
   $show =~ m!git-svn-id: .+@(\d+)! or die "no svn rev for:\n$show";
   my $svn_rev = $1;
@@ -24,11 +63,34 @@ while (<>) {
   $longest = length $revert_line if length $revert_line > $longest;
   print "$revert_line\n";
   $log .= "$revert_line\n";
-  system "git revert --no-edit --no-commit $sha";
-  die "Failed to revert $sha; aborting.\n" if ($? > 0);
+  my @cmd = qw(git revert --no-edit);
+  push @cmd, '--no-commit' if $opts{'no-commit'};
+  push @cmd, $sha;
+  system @cmd;
+  if ($? > 0) {
+    warn <<EOF;
+
+Failed to revert $sha!
+
+Spawning a new shell; please fix up the reversion and exit
+the shell when done.  If the shell exits with a non-zero exit
+code, the revert will be abandoned.
+EOF
+    system $ENV{SHELL};
+    my $exit_code = $? >> 8;
+    die "Shell exited with exit code $exit_code; abandoning revert.\n"
+      if $exit_code > 0;
+  }
 }
 
 $log_header .= sprintf($format, qw(svn git summary)) . "\n";
 $log_header .= "-" x $longest . "\n";
 
-system qw(git commit --edit -m), $log_header . $log;
+$log = $log_header . $log;
+
+if ($opts{'no-commit'}) {
+  system qw(git commit --edit -m), $log;
+}
+else {
+  print "\nSuggested log message for squashed commit:\n\n" . $log;
+}
