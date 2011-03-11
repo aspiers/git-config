@@ -1,0 +1,7 @@
+#!/bin/bash
+
+rev="${1:-HEAD}"
+
+while rev=$( ggpb "$rev" 2>/dev/null ); do
+    echo "$rev"
+done
