@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # pb == parent branch (although it will show a tag if it's closer)
 

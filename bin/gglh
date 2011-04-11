@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # show only the SHA1 - useful for multiple cherry-picks (see ggcpm)
 exec git log --pretty=tformat:%H --abbrev-commit "$@"

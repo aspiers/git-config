@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # N.B. this file is source'd by git-rewrite-author, not executed!
 

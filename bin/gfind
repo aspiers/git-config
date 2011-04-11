@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ $# -eq 0 ] || ! git rev-parse --verify "$1" >/dev/null 2>&1; then
     treeish=HEAD

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # No need for this to pass parameters; instead:
 (
