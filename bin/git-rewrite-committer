@@ -4,4 +4,4 @@ if [ -z "$1" ]; then
     set -- "`ggup`"..HEAD
 fi
 
-git filter-branch -f --env-filter 'source git-rewrite-committer-filter' "$@"
+git filter-branch -f --env-filter '. git-rewrite-committer-filter' "$@"
