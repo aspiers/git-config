@@ -20,11 +20,12 @@ EOF
     exit 1
 fi
 
-if [ "$GIT_AUTHOR_NAME" = "Adam Spiers" ]; then
-    #GIT_AUTHOR_NAME="Adam Spiers"
+if [ "$GIT_AUTHOR_NAME" = "Adam Spiers" ] || [ "$GIT_AUTHOR_NAME" = "adam" ]; then
+    GIT_AUTHOR_NAME="Adam Spiers"
     GIT_AUTHOR_EMAIL="$GIT_NEW_AUTHOR_EMAIL"
     #GIT_AUTHOR_DATE="<New Date>"
-# else
-#     echo "\$GIT_AUTHOR_NAME was $GIT_AUTHOR_NAME" >&2
+else
+    :
+    #echo "\$GIT_AUTHOR_NAME was $GIT_AUTHOR_NAME" >&2
 fi
 
