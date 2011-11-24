@@ -39,8 +39,6 @@ Build
 .bash_history
 *.rpmsave
 *.cfgsave.*
-config.log
 autom4te.cache
 .hg
 .git
-*.log
