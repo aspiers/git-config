@@ -13,4 +13,4 @@ if [ $# -eq 0 ]; then
     fi
 fi
 
-exec git rebase -i "$@"
+exec git rebase "$@"
