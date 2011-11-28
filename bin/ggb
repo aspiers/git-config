@@ -1,4 +1,4 @@
 #!/bin/bash
 
-exec git branch -vv --color=always "$@" | cut -c 1-${COLUMNS:-70}
+exec git branch -vv --color=always "$@" | trim-lines
 
