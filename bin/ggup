@@ -129,9 +129,9 @@ get_upstream "$local_branch"
 if ! git rev-parse "$upstream" >/dev/null 2>&1; then
     cat <<EOF >&2
 Best guess '$upstream' was invalid.
-Maybe you should do:
+Maybe you should run:
 
-   git config branch.$local_branch.remote \$remote
+   ggsup $local_branch \$remote/\$branch
 
 Couldn't figure out upstream ref; aborting.
 EOF
