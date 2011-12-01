@@ -28,7 +28,24 @@ set_upstream () {
         set -- `git head` "$1"
     fi
 
-    git branch --set-upstream "$1" "$2"
+    local_branch="$1"
+    remote_ref="$2"
+
+    if git branch -h 2>&1 | grep -q -- --set-upstream; then
+        git branch --set-upstream "$local_branch" "$remote_ref"
+    else
+        git rev-parse "$remote_ref" >/dev/null || exit 1
+        remote="${remote_ref%/*}"
+        remote_branch="${remote_ref#*/}"
+        [ "$remote" = "$remote_ref" ] && remote=.
+        git config branch.$local_branch.remote "$remote"
+        git config branch.$local_branch.merge  "$remote_branch"
+        if [ "$remote" = '.' ]; then
+            echo "Branch $local_branch set up to track local branch $remote_branch."
+        else
+            echo "Branch $local_branch set up to track remote branch $remote_branch from $remote."
+        fi
+    fi
 }
 
 root="`git root`"
