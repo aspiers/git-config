@@ -100,14 +100,7 @@ get_upstream () {
         fi
     fi
 
-    if ! get_svn_upstream; then
-        # Need to apply refspec transformation; for now we just guess
-        # that the upstream was a git repository, and that the local
-        # and remote branches have the same name.  'origin' is just
-        # the name that git uses by default to refer to the
-        # repository that you cloned from.
-        upstream=origin/$local_branch
-    fi
+    get_svn_upstream
 }
 
 root="`git root`"
@@ -124,19 +117,24 @@ if [ $# -eq 0 ]; then
     local_branch="`git head`"
 fi
 
+upstream=
 get_upstream "$local_branch"
 
-if ! git rev-parse "$upstream" >/dev/null 2>&1; then
-    cat <<EOF >&2
-Best guess '$upstream' was invalid.
+if [ -n "$upstream" ] && git rev-parse "$upstream" >/dev/null 2>&1; then
+    echo "$upstream"
+    exit 0
+fi
+
+if [ -n "$upstream" ]; then
+    echo "Best guess '$upstream' was invalid."
+fi
+
+cat <<EOF >&2
 Maybe you should run:
 
    ggsup $local_branch \$remote/\$branch
 
 Couldn't figure out upstream ref; aborting.
 EOF
-    exit 1
-fi
 
-echo "$upstream"
-
+exit 1
