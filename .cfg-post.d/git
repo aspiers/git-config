@@ -24,6 +24,8 @@ git config --global color.diff auto
 #git config --global core.pager $PAGER
 git config --global pager.diff-tree true
 
+git config --global rebase.autosquash true
+
 ##############################################################################
 # set up .gitignore from .cvsignore
 
