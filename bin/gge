@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    git config user.email
+else
+    git config user.email "$1@adamspiers.org"
+fi
