@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# List untracked files
+# http://stackoverflow.com/questions/3801321/git-list-only-untracked-files-also-custom-commands
+
+exec git ls-files --other --exclude-standard "$@"
