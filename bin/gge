@@ -3,5 +3,12 @@
 if [ -z "$1" ]; then
     git config user.email
 else
-    git config user.email "$1@adamspiers.org"
+    case "$1" in
+        *@*)
+            git config user.email "$1"
+            ;;
+        *)
+            git config user.email "$1@adamspiers.org"
+            ;;
+    esac
 fi
