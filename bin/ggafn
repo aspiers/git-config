@@ -1,3 +1,10 @@
 #!/bin/bash
 
-exec git annex find --not --in= "$@"
+[ -z "$1" ] && set -- .
+
+symlinks -r . \
+    | egrep '^dangling: .+ -> (\.\./)*\.git/annex/objects/' \
+    | awk '{print $2}'
+
+# HORRIBLY slow:
+#exec git annex find --not --in= "$@"
