@@ -3,8 +3,7 @@
 [ -z "$1" ] && set -- .
 
 symlinks -r . \
-    | egrep '^dangling: .+ -> (\.\./)*\.git/annex/objects/' \
-    | awk '{print $2}'
+    | perl -lne 'm!^dangling: (.+) -> (\.\./)*\.git/annex/objects/! && print $1'
 
 # HORRIBLY slow:
 #exec git annex find --not --in= "$@"
