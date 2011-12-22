@@ -5,7 +5,7 @@ if [ "$1" = '--help' ]; then
 fi
 
 export GIT_PAGER_MODE=none
-. $ZDOTDIR/.shared_rc.d/git
+. $ZDOTDIR/.shared_rc.d/git-pager
 
 ref="${1:-HEAD}"
 

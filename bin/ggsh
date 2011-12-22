@@ -24,7 +24,7 @@ case "$type" in
         ;;
 esac
         
-. $ZDOTDIR/.shared_rc.d/git
+. $ZDOTDIR/.shared_rc.d/git-pager
 
 #echo git show "$@"
 exec git show "$@"

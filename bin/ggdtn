@@ -8,5 +8,5 @@ if [ -z "$1" ]; then
 fi
 
 export GIT_PAGER_MODE=none
-. $ZDOTDIR/.shared_rc.d/git
+. $ZDOTDIR/.shared_rc.d/git-pager
 exec git diff-tree --name-status -r "$@"

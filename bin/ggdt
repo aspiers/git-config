@@ -12,5 +12,5 @@ if [ -z "$1" ]; then
 fi
 
 export GIT_PAGER_MODE=diff
-. $ZDOTDIR/.shared_rc.d/git
+. $ZDOTDIR/.shared_rc.d/git-pager
 exec git diff-tree -p $args "$@"
