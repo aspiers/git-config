@@ -5,24 +5,30 @@ use warnings;
 
 use File::Find;
 use File::stat;
+use Getopt::Long;
 
 use constant DOTS_EVERY => 10_000;
 
-my $bytes_formatter = get_bytes_formatter();
-
 my %keys;
-
-push @ARGV, '.' unless @ARGV;
-
+my %opts;
 my $processed = 0;
 my $duplicate_sets = 0;
 my $duplicate_files = 0;
 my $wasted = 0;
+my $bytes_formatter = get_bytes_formatter();
 
-$| = 1;
-find(\&wanted, @ARGV);
-print "\n" if $processed > DOTS_EVERY;
-show_dups();
+sub usage {
+    warn @_, "\n" if @_;
+
+    (my $ME = $0) =~ s,.*/,,;
+
+    die <<EOUSAGE;
+Usage: $ME [OPTIONS] [DIRECTORIES]
+Options:
+  -h, --help           Show this help
+  -n, --no-keys        Don't display keys
+EOUSAGE
+}
 
 sub inc {
     if (++$processed % DOTS_EVERY == 0) {
@@ -57,7 +63,7 @@ sub show_dups {
         my $surplus = @$files - 1;
         #print "$surplus surplus files at $size each\n";
         $wasted += $size * $surplus;
-        print "$key\n";
+        print "$key\n" unless $opts{'no-keys'};
         print map "   $_\n", @$files;
         print "\n";
     }
@@ -81,3 +87,13 @@ sub get_bytes_formatter {
 
     return sub { $_[0] . " bytes" };
 }
+
+GetOptions(\%opts, 'help|h', 'no-keys|n') or usage();
+usage() if $opts{help};
+
+push @ARGV, '.' unless @ARGV;
+
+$| = 1;
+find(\&wanted, @ARGV);
+print "\n" if $processed > DOTS_EVERY;
+show_dups();
