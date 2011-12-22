@@ -35,8 +35,7 @@ sub wanted {
         return;
     }
 
-    $key =~ s!(/SHA[\w-]+)\1!$1!;
-
+    $key =~ s!/(SHA[\w-]+)/\1!/$1!;
     push @{ $keys{$key} }, $File::Find::name;
 }
 
