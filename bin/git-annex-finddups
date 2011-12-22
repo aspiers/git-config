@@ -4,14 +4,22 @@ use strict;
 use warnings;
 
 use File::Find;
+use File::stat;
 
 use constant DOTS_EVERY => 10_000;
+
+eval { require Number::Bytes::Human; };
+my $NBH = $@ ? 0 : 1;
+Number::Bytes::Human->import qw(format_bytes) if $NBH;
 
 my %keys;
 
 push @ARGV, '.' unless @ARGV;
 
 my $processed = 0;
+my $duplicate_sets = 0;
+my $duplicate_files = 0;
+my $wasted = 0;
 
 $| = 1;
 find(\&wanted, @ARGV);
@@ -43,7 +51,19 @@ sub show_dups {
     while (my ($key, $files) = each %keys) {
         next unless @$files > 1;
 
+        $duplicate_sets++;
+        $duplicate_files += @$files;
+        my $s = stat($files->[0])
+            or die "stat($files->[0]) failed: $!\n";
+        my $size = $s->size;
+        my $surplus = @$files - 1;
+        #print "$surplus surplus files at $size each\n";
+        $wasted += $size * $surplus;
         print "$key\n";
         print map "   $_\n", @$files;
+        print "\n";
     }
+
+    my $hwasted = ($NBH ? format_bytes($wasted) : $wasted) . " bytes";
+    print "$duplicate_files duplicate files in $duplicate_sets sets (wasted $hwasted)\n";
 }
