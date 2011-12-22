@@ -8,9 +8,7 @@ use File::stat;
 
 use constant DOTS_EVERY => 10_000;
 
-eval { require Number::Bytes::Human; };
-my $NBH = $@ ? 0 : 1;
-Number::Bytes::Human->import qw(format_bytes) if $NBH;
+my $bytes_formatter = get_bytes_formatter();
 
 my %keys;
 
@@ -64,6 +62,22 @@ sub show_dups {
         print "\n";
     }
 
-    my $hwasted = ($NBH ? format_bytes($wasted) : $wasted) . " bytes";
+    my $hwasted = $bytes_formatter->($wasted);
     print "$duplicate_files duplicate files in $duplicate_sets sets (wasted $hwasted)\n";
+}
+
+sub get_bytes_formatter {
+    eval { require Format::Human::Bytes; };
+    if (! $@) {
+        Format::Human::Bytes->import;
+        return sub { Format::Human::Bytes::base10(shift) };
+    }
+
+    eval { require Number::Bytes::Human; };
+    if (! $@) {
+        Number::Bytes::Human->import qw(format_bytes);
+        return sub { format_bytes(shift) };
+    }
+
+    return sub { $_[0] . " bytes" };
 }
