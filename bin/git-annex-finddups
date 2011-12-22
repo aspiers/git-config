@@ -5,14 +5,27 @@ use warnings;
 
 use File::Find;
 
+use constant DOTS_EVERY => 10_000;
+
 my %keys;
 
 push @ARGV, '.' unless @ARGV;
 
+my $processed = 0;
+
+$| = 1;
 find(\&wanted, @ARGV);
+print "\n" if $processed > DOTS_EVERY;
 show_dups();
 
+sub inc {
+    if (++$processed % DOTS_EVERY == 0) {
+        print ".";
+    }
+}
+
 sub wanted {
+    inc();
     return unless -l;
 
     my $dst = readlink($_) or die "readline($_) failed: $!\n";
