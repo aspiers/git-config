@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use File::Find;
+
+my %keys;
+
+push @ARGV, '.' unless @ARGV;
+
+find(\&wanted, @ARGV);
+show_dups();
+
+sub wanted {
+    return unless -l;
+
+    my $dst = readlink($_) or die "readline($_) failed: $!\n";
+    my $key = $dst;
+    unless ($key =~ s!^(../)*\.git/annex/objects/!!) {
+        #print "Skipping non-annexed symlink $File::Find::name -> $dst\n";
+        return;
+    }
+
+    $key =~ s!(/SHA[\w-]+)\1!$1!;
+
+    push @{ $keys{$key} }, $File::Find::name;
+}
+
+sub show_dups {
+    while (my ($key, $files) = each %keys) {
+        next unless @$files > 1;
+
+        print "$key\n";
+        print map "   $_\n", @$files;
+    }
+}
