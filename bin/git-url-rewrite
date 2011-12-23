@@ -1,9 +1,50 @@
 #!/bin/bash
 
-abbrev="$1"
-full="$2"
+me=`basename $0`
 
-existing_full=$(
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: 
+  $me               Lists all rewrite rules.
+  $me ABBREV        Lists rewrite rule(s) for ABBREV
+  $me ABBREV FULL   Sets rewrite rule for ABBREV to FULL
+EOF
+    exit "$exit_code"
+}
+
+get_rewrites () {
+    git config --global --list | \
+        perl -lne '
+            if (/^url\.(.+)\.insteadOf=(.+)$/i) {
+                print "$2 -> $1";
+            }'
+}
+
+get_rewrite () {
+    abbrev="$1"
+
+    git config --global --list | \
+        perl -lne '
+            if (/^(url\.(.+)\.insteadOf)='"$abbrev"'$/i) {
+                print $2;
+            }'
+}
+
+get_and_clear_rewrite () {
+    abbrev="$1"
+    full="$2"
+
     git config --global --list | \
         perl -lne '
             if (/^(url\.(.+)\.insteadOf)='"$abbrev"'$/i) {
@@ -11,12 +52,33 @@ existing_full=$(
                 next if $2 eq "'"$full"'";
                 system qw(git config --global --unset), $1;
             }'
-)
+}
 
-git config --global "url.$full.insteadOf" "$abbrev"
+set_rewrite () {
+    abbrev="$1"
+    full="$2"
 
-if [ -z "$existing_full" ]; then
-    echo "Set URL rewrite of $abbrev -> $full"
-elif [ "$full" != "$existing_full" ]; then
-    echo "Changed URL rewrite of $abbrev -> $full (was $existing_full)"
+    existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
+
+    git config --global "url.$full.insteadOf" "$abbrev"
+
+    if [ -z "$existing_full" ]; then
+        echo "Set URL rewrite of $abbrev -> $full"
+    elif [ "$full" != "$existing_full" ]; then
+        echo "Changed URL rewrite of $abbrev -> $full (was $existing_full)"
+    fi
+}
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+    usage 0
+fi
+
+if [ $# = 0 ]; then
+    get_rewrites
+elif [ $# = 1 ]; then
+    get_rewrite "$1"
+elif [ $# = 2 ]; then
+    set_rewrite "$@"
+else
+    usage 1
 fi
