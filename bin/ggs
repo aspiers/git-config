@@ -1,5 +1,8 @@
 #!/bin/bash
 
-git-check-email
+git status "$@"
+ret=$?
 
-exec git status "$@"
+git root >/dev/null 2>&1 && git-check-email
+
+exit $ret
