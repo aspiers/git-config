@@ -57,9 +57,9 @@ sub get_size {
             return $s->size;
         }
     }
-    warn "Couldn't stat any of duplicates:\n";
-    warn "  $_\n" foreach @_;
-    warn "so they won't be counted in the wasted space total.\n";
+    # warn "Couldn't stat any of duplicates:\n";
+    # warn "  $_\n" foreach @_;
+    # warn "so they won't be counted in the wasted space total.\n";
     return 0;
 }
 
