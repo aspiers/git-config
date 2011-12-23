@@ -42,3 +42,4 @@ Build
 autom4te.cache
 .hg
 .git
+.directory
