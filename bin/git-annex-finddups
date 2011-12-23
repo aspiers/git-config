@@ -51,15 +51,25 @@ sub wanted {
     push @{ $keys{$key} }, $File::Find::name;
 }
 
+sub get_size {
+    foreach my $file (@_) {
+        if (my $s = stat($file)) {
+            return $s->size;
+        }
+    }
+    warn "Couldn't stat any of duplicates:\n";
+    warn "  $_\n" foreach @_;
+    warn "so they won't be counted in the wasted space total.\n";
+    return 0;
+}
+
 sub show_dups {
     while (my ($key, $files) = each %keys) {
         next unless @$files > 1;
 
         $duplicate_sets++;
         $duplicate_files += @$files;
-        my $s = stat($files->[0])
-            or die "stat($files->[0]) failed: $!\n";
-        my $size = $s->size;
+        my $size = get_size(@$files);
         my $surplus = @$files - 1;
         #print "$surplus surplus files at $size each\n";
         $wasted += $size * $surplus;
