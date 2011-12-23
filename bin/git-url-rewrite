@@ -57,6 +57,7 @@ get_and_clear_rewrite () {
 set_rewrite () {
     abbrev="$1"
     full="$2"
+    [ -z "$1" ] && usage "Abbreviation cannot be empty."
 
     existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
 
