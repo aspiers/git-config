@@ -19,6 +19,7 @@ Usage:
   $me               Lists all rewrite rules.
   $me ABBREV        Lists rewrite rule(s) for ABBREV
   $me ABBREV FULL   Sets rewrite rule for ABBREV to FULL
+                    If FULL is empty string, clears the rule.
 EOF
     exit "$exit_code"
 }
@@ -55,11 +56,17 @@ get_and_clear_rewrite () {
 }
 
 set_rewrite () {
+    [ -z "$1" ] && usage "Abbreviation cannot be empty."
     abbrev="$1"
     full="$2"
-    [ -z "$1" ] && usage "Abbreviation cannot be empty."
 
     existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
+
+    if [ -z "$full" ]; then
+        git config --global --unset "url.$full.insteadOf"
+        echo "Cleared URL rewrite of $abbrev (was $existing_full)"
+        return
+    fi
 
     git config --global "url.$full.insteadOf" "$abbrev"
 
