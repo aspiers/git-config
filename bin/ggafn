@@ -1,9 +1,8 @@
 #!/bin/bash
 
-[ -z "$1" ] && set -- .
+# [ -z "$1" ] && set -- .
+#
+# symlinks -r "$@" \
+#     | perl -lne 'm!^dangling: (.+) -> (\.\./)*\.git/annex/objects/! && print $1'
 
-symlinks -r "$@" \
-    | perl -lne 'm!^dangling: (.+) -> (\.\./)*\.git/annex/objects/! && print $1'
-
-# HORRIBLY slow:
-#exec git annex find --not --in= "$@"
+exec git annex find --not --in=. "$@"
