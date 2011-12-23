@@ -32,7 +32,7 @@ EOUSAGE
 
 sub inc {
     if (++$processed % DOTS_EVERY == 0) {
-        print ".";
+        print STDERR ".";
     }
 }
 
@@ -108,5 +108,5 @@ push @ARGV, '.' unless @ARGV;
 
 $| = 1;
 find(\&wanted, @ARGV);
-print "\n" if $processed > DOTS_EVERY;
+print STDERR "\n" if $processed > DOTS_EVERY;
 show_dups();
