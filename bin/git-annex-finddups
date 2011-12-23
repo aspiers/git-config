@@ -74,7 +74,7 @@ sub show_dups {
         #print "$surplus surplus files at $size each\n";
         $saved += $size * $surplus;
         print "$key\n" if $opts{keys};
-        foreach my $file (@$files) {
+        foreach my $file (sort @$files) {
             $file =~ s/"/\\"/g;
             print "  ", ($file =~ /\s/ ? qq{"$file"} : $file), "\n";
         }
