@@ -25,8 +25,8 @@ sub usage {
     die <<EOUSAGE;
 Usage: $ME [OPTIONS] [DIRECTORIES]
 Options:
-  -h, --help           Show this help
-  -n, --no-keys        Don't display keys
+  -h, --help        Show this help
+  -k, --keys        Display the key for each set
 EOUSAGE
 }
 
@@ -63,7 +63,7 @@ sub show_dups {
         my $surplus = @$files - 1;
         #print "$surplus surplus files at $size each\n";
         $wasted += $size * $surplus;
-        print "$key\n" unless $opts{'no-keys'};
+        print "$key\n" if $opts{keys};
         print map "   $_\n", @$files;
         print "\n";
     }
@@ -88,7 +88,7 @@ sub get_bytes_formatter {
     return sub { $_[0] . " bytes" };
 }
 
-GetOptions(\%opts, 'help|h', 'no-keys|n') or usage();
+GetOptions(\%opts, 'help|h', 'keys|k') or usage();
 usage() if $opts{help};
 
 push @ARGV, '.' unless @ARGV;
