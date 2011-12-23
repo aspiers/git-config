@@ -14,7 +14,7 @@ my %opts;
 my $processed = 0;
 my $duplicate_sets = 0;
 my $duplicate_files = 0;
-my $wasted = 0;
+my $saved = 0;
 my $bytes_formatter = get_bytes_formatter();
 
 sub usage {
@@ -59,7 +59,7 @@ sub get_size {
     }
     # warn "Couldn't stat any of duplicates:\n";
     # warn "  $_\n" foreach @_;
-    # warn "so they won't be counted in the wasted space total.\n";
+    # warn "so they won't be counted in the saved space total.\n";
     return 0;
 }
 
@@ -72,7 +72,7 @@ sub show_dups {
         my $size = get_size(@$files);
         my $surplus = @$files - 1;
         #print "$surplus surplus files at $size each\n";
-        $wasted += $size * $surplus;
+        $saved += $size * $surplus;
         print "$key\n" if $opts{keys};
         foreach my $file (@$files) {
             $file =~ s/"/\\"/g;
@@ -81,8 +81,8 @@ sub show_dups {
         print "\n";
     }
 
-    my $hwasted = $bytes_formatter->($wasted);
-    print "$duplicate_files duplicate files in $duplicate_sets sets (wasted $hwasted)\n";
+    my $hsaved = $bytes_formatter->($saved);
+    print "$duplicate_files duplicate files in $duplicate_sets sets (saved $hsaved)\n";
 }
 
 sub get_bytes_formatter {
