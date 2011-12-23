@@ -64,7 +64,10 @@ sub show_dups {
         #print "$surplus surplus files at $size each\n";
         $wasted += $size * $surplus;
         print "$key\n" if $opts{keys};
-        print map "   $_\n", @$files;
+        foreach my $file (@$files) {
+            $file =~ s/"/\\"/g;
+            print "  ", ($file =~ /\s/ ? qq{"$file"} : $file), "\n";
+        }
         print "\n";
     }
 
