@@ -4,3 +4,4 @@ remote="$1"
 
 git fetch "$remote"
 git pull "$remote" master
+git annex merge
