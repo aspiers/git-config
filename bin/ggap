@@ -1,0 +1,6 @@
+#!/bin/bash
+
+remote="$1"
+
+git fetch "$remote"
+git pull "$remote" master
