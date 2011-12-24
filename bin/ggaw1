@@ -1,3 +1,8 @@
 #!/bin/bash
 
-exec git annex whereis --not --copies 2 "$@"
+git annex whereis --not --copies 2 "$@" | \
+    perl -wne '
+        next if /^ok$/;
+        /^whereis (.+) \(1 copy\)/ and $f = $1;
+        /^\s+([a-f0-9-]+) -- (.+)/ and print "$2 $f\n";
+    '
