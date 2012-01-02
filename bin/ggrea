@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Git REmote Add
+
+if [ $# = 0 ]; then
+    exec git remote -v
+else
+    exec git remote add "$@"
+fi
