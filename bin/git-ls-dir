@@ -27,6 +27,7 @@
 use strict;
 use warnings;
 
+use Getopt::Long;
 use Term::ANSIColor qw(:constants colorstrip);
 
 sub usage {
@@ -35,14 +36,16 @@ sub usage {
     (my $ME = $0) =~ s,.*/,,;
 
     die <<EOUSAGE;
-Usage: $ME [options to git ls-tree]
+Usage: $ME [-r COMMIT-ISH] [options to git ls-tree]
 EOUSAGE
 }
 
 sub get_file_list {
+    my ($commitish) = @_;
+
     my %unknown;
 
-    my $cmd = "git ls-tree --full-name @ARGV";
+    my $cmd = "git ls-tree --full-name $commitish @ARGV";
     open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
     while (<IN>) {
         if (/^\S+\s+blob \S+\s+(\S+)$/) {
@@ -56,7 +59,7 @@ sub get_file_list {
 }
 
 sub find_commits {
-    my ($unknown) = @_;
+    my ($commitish, $unknown) = @_;
 
     my @attributed;
     my ($commit, $author, $date, $message);
@@ -65,7 +68,7 @@ sub find_commits {
     my $dots;
 
     # Original version had -r --root --raw here - why?
-    my $cmd = "git log --raw -r --root --no-abbrev --pretty=format:%H~%an~%ai~%B";
+    my $cmd = "git log --raw -r --root --no-abbrev --pretty=format:%H~%an~%ai~%B $commitish";
     open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
 
     while (<IN>) {
@@ -134,11 +137,12 @@ sub show_results {
 }
 
 sub main {
-    push @ARGV, 'HEAD' unless @ARGV;
-    usage() if $ARGV[0] eq '-h' or $ARGV[0] eq '--help';
+    my %opts = ( commitish => 'HEAD' );
+    GetOptions(\%opts, 'help|h', 'commitish|r=s') or usage();
+    usage() if $opts{help};
 
-    my $unknown = get_file_list();
-    my $attributed = find_commits($unknown);
+    my $unknown = get_file_list($opts{commitish});
+    my $attributed = find_commits($opts{commitish}, $unknown);
 
     if (%$unknown) {
         die "ERROR!  Failed to find commits for the following files:\n",
