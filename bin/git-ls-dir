@@ -1,0 +1,151 @@
+#!/usr/bin/perl
+#
+# git-ls-dir - list files in a git repo tree together with the commits
+#              which most recently touched them.
+#
+# Adapted from:
+#
+#   https://git.wiki.kernel.org/articles/e/x/a/ExampleScripts_6d49.html
+#
+# by Adam Spiers <git@adamspiers.org>
+#
+# Note that this is significantly better performing than the following
+# quick and dirty shell hack:
+#
+#   git ls-files "$@" | while read file; do
+#       git --no-pager log \
+#           -n 1 \
+#           --date=iso \
+#           --format="%Cblue%h%Creset %Cgreen%ad%Creset C(yellow)%an%Creset $file %C(cyan)[%s]%Creset" \
+#           -- $file
+#   done
+#
+# See also:
+#   http://stackoverflow.com/questions/223678/git-which-commit-has-this-blob
+#   http://stackoverflow.com/questions/6957441/how-to-find-out-what-commit-a-checked-out-file-came-from
+
+use strict;
+use warnings;
+
+use Term::ANSIColor qw(:constants colorstrip);
+
+sub usage {
+    warn @_, "\n" if @_;
+
+    (my $ME = $0) =~ s,.*/,,;
+
+    die <<EOUSAGE;
+Usage: $ME [options to git ls-tree]
+EOUSAGE
+}
+
+sub get_file_list {
+    my %unknown;
+
+    my $cmd = "git ls-tree --full-name @ARGV";
+    open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
+    while (<IN>) {
+        if (/^\S+\s+blob \S+\s+(\S+)$/) {
+            my $filename = $1;
+            $unknown{$filename}++;
+        }
+    }
+    close IN or exit 1; # die "Error running $cmd" . (length $! ? ": $!" : '') . "\n";
+
+    return \%unknown;
+}
+
+sub find_commits {
+    my ($unknown) = @_;
+
+    my @attributed;
+    my ($commit, $author, $date, $message);
+    my $commits = 0;
+    my $found   = 0;
+    my $dots;
+
+    # Original version had -r --root --raw here - why?
+    my $cmd = "git log --raw -r --root --no-abbrev --pretty=format:%H~%an~%ai~%B";
+    open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
+
+    while (<IN>) {
+        chomp;
+        if (/^([0-9a-f]+)~(.*)~([^~]+)~(.+)$/) {
+            ($commit, $author, $date, $message) = ($1, $2, $3, $4);
+            #print "Got commit $commit\n";
+            if (++$commits % 10_000 == 0) {
+                print STDERR ".";
+                $dots++;
+            }
+        }
+        elsif (/^:[0-9]+\s+[0-9]+\s+[0-9a-f]+\s+[0-9a-f]+\s+[A-Z]\s+(.*)$/) {
+            my $path = $1;
+            unless ($date) {
+                die "INTERNAL ERROR: didn't get commit meta-data prior to file blob $1; aborting\n";
+            }
+            if ($unknown->{$path}) {
+                delete $unknown->{$path};
+                $found++;
+                if (++$found % 10_000 == 0) {
+                    print STDERR "+";
+                    $dots++;
+                }
+                my $short_commit = substr($commit, 0, 8);
+                #print "$short_commit $path\n";
+                push @attributed, {
+                    path    => $path,
+                    author  => $author,
+                    date    => $date,
+                    commit  => $short_commit,
+                    message => $message,
+                };
+                %$unknown or last;
+            }
+        }
+        else {
+            #print "Didn't parse: [$_]\n";
+        }
+    }
+    close IN;
+
+    print STDERR "\n" if $dots;
+
+    return \@attributed;
+}
+
+sub show_results {
+    my ($attributed) = @_;
+
+    chomp(my $prefix = `git rev-parse --show-prefix`);
+
+    for my $a (@$attributed) {
+        (my $path = $a->{path}) =~ s!^\Q$prefix!!;
+        my @fields = (
+            CYAN   . $a->{commit},
+            GREEN  . $a->{date},
+            YELLOW . $a->{author},
+            RESET  . $path,
+            BLUE   . " [$a->{message}]"
+        );
+        my $line = sprintf RESET . join(' ', @fields) . RESET . "\n";
+        $line = colorstrip($line) unless -t 1;
+        print $line;
+    }
+}
+
+sub main {
+    push @ARGV, 'HEAD' unless @ARGV;
+    usage() if $ARGV[0] eq '-h' or $ARGV[0] eq '--help';
+
+    my $unknown = get_file_list();
+    my $attributed = find_commits($unknown);
+
+    if (%$unknown) {
+        die "ERROR!  Failed to find commits for the following files:\n",
+        map "  $_\n", sort keys %$unknown;
+    }
+
+    show_results($attributed);
+}
+
+main();
