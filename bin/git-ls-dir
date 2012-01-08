@@ -75,7 +75,7 @@ sub find_commits {
     my $dots;
 
     # Original version had -r --root --raw here - why?
-    my $cmd = "git log --raw -r --root --no-abbrev --pretty=format:%H~%an~%ai~%B $commitish";
+    my $cmd = "git log -m --raw --no-abbrev --pretty=format:%H~%an~%ai~%B $commitish";
     open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
 
     while (<IN>) {
