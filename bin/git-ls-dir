@@ -55,6 +55,13 @@ sub get_file_list {
     }
     close IN or exit 1; # die "Error running $cmd" . (length $! ? ": $!" : '') . "\n";
 
+    if (! %unknown) {
+        die <<EOF;
+'$cmd' did not return any files; aborting.
+If you passed a parameter referring to a directory, make sure it has a trailing slash.
+EOF
+    }
+
     return \%unknown;
 }
 
