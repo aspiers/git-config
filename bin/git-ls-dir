@@ -36,7 +36,7 @@ sub usage {
     (my $ME = $0) =~ s,.*/,,;
 
     die <<EOUSAGE;
-Usage: $ME [-r COMMIT-ISH] [options to git ls-tree]
+Usage: $ME [-c COMMIT-ISH] [options to git ls-tree]
 EOUSAGE
 }
 
@@ -138,7 +138,10 @@ sub show_results {
 
 sub main {
     my %opts = ( commitish => 'HEAD' );
-    GetOptions(\%opts, 'help|h', 'commitish|r=s') or usage();
+
+    Getopt::Long::Configure('pass_through');
+
+    GetOptions(\%opts, 'help|h', 'commitish|c=s') or usage();
     usage() if $opts{help};
 
     my $unknown = get_file_list($opts{commitish});
