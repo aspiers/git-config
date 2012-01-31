@@ -45,3 +45,5 @@ autom4te.cache
 .directory
 .autosync.log
 .autosync.pid
+.osc
+_service:*
