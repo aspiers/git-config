@@ -5,7 +5,7 @@ if [ "$1" = '--help' ]; then
 fi
 
 if [ $# = 0 ]; then
-    set -- "`ggup`..HEAD"
+    set -- "`git upstream`..HEAD"
 fi
 
 exec git format-patch "$@"

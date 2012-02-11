@@ -7,7 +7,7 @@ fi
 # Redundant with git >= 1.7.6
 if [ $# -eq 0 ]; then
     # default to rebasing against upstream
-    if upstream="$( ggup )"; then
+    if upstream="$( git upstream )"; then
         set "$upstream"
     else
         exit 1

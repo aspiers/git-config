@@ -10,7 +10,7 @@ if [ $# -gt 1 ]; then
 fi
 
 if [ $# -eq 0 ]; then
-    range="`ggup`..HEAD"
+    range="`git upstream`..HEAD"
     echo "Checking $range"
     echo
 else

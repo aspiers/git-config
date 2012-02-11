@@ -3,7 +3,7 @@
 here=`dirname $0`
 
 if [ -z "$1" ]; then
-    set -- "`ggup`"..HEAD
+    set -- "`git upstream`"..HEAD
 fi
 
 git filter-branch -f --env-filter ". $here/git-rewrite-author-filter" "$@"

@@ -11,7 +11,7 @@ fi
 [ -t 1 ] && args=--color
 
 if [ -z "$1" ]; then
-    upstream="`ggup`" || exit 1  # ggup will display the error
+    upstream="`git upstream`" || exit 1  # git upstream will display the error
     set -- "$upstream"..HEAD
 fi
 

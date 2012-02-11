@@ -2,7 +2,7 @@
 
 # git Outgoing
 
-upstream="`ggup`" || exit 1  # ggup will display the error
+upstream="`git upstream`" || exit 1  # git upstream will display the error
 
 echo "HEAD is `ggde`"
 echo -e "Upstream is $upstream\n"
