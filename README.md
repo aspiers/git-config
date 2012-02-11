@@ -19,6 +19,7 @@ Contents include:
 * [`git-rewrite-author`](https://github.com/aspiers/git-config/blob/master/bin/git-rewrite-author) - rewrite the author for a range of commits
 * [`git-rewrite-committer`](https://github.com/aspiers/git-config/blob/master/bin/git-rewrite-committer) - rewrite the committer for a range of commits
 * [`git-sed-range`](https://github.com/aspiers/git-config/blob/master/bin/git-sed-range) - run a sed script over every log message in a range of commits
+* [`git-add-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-add-prefix) - add a prefix string to every log message in a range of commits
 
 ### Management of remotes
 
