@@ -8,6 +8,11 @@ set -- `git rev-list --count --left-right $upstream...HEAD`
 behind="$1"
 ahead="$2"
 
+if [ "$1" = '-q' ]; then
+    # quiet mode; just exit successfully iff we're in sync with upstream
+    exit $(( behind + ahead ))
+fi
+
 if [ "$behind" = 0 -a "$ahead" = 0 ]; then
     echo "$head is in sync with $upstream"
 elif [ "$behind" != 0 -a "$ahead" != 0 ]; then
