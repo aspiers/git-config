@@ -2,11 +2,25 @@
 
 # http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
 
+shmode=
+if [ "$1" = '--sh' ]; then
+    shmode=yes
+    shift
+fi
+
 head=`git head`
 upstream=`git upstream`
 set -- `git rev-list --count --left-right $upstream...HEAD`
 behind="$1"
 ahead="$2"
+
+if [ -n "$shmode" ]; then
+    cat <<EOF
+behind=$behind
+ahead=$ahead
+EOF
+    exit
+fi
 
 if [ "$1" = '-q' ]; then
     # quiet mode; just exit successfully iff we're in sync with upstream
