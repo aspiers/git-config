@@ -45,7 +45,7 @@ Little shell wrappers to make the git porcelain and higher-level scripts a littl
 
 ### ... and more!
 
-There are many other handy utilities - feel free to [browse the `bin/` directory](https://github.com/aspiers/git-config/tree/master/bin)!
+Feel free to [browse the `bin/` directory](https://github.com/aspiers/git-config/tree/master/bin) :-)
 
 ## INSTALLATION
 
