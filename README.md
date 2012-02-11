@@ -38,6 +38,7 @@ Little shell wrappers to make the git porcelain and higher-level scripts a littl
 * [`git-root`](https://github.com/aspiers/git-config/blob/master/bin/git-root) - obtain the absolute path to the root (top-level) directory of the repository we're currently in
 * [`git-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-prefix) - obtain the current directory path relative to the root (top-level) directory of the repository
 * [`git-cdup`](https://github.com/aspiers/git-config/blob/master/bin/git-cdup) - obtain the relative path from the current directory to the root (top-level) directory of the repository
+* [`gfind`](https://github.com/aspiers/git-config/blob/master/bin/gfind) - like find(1), but only lists files tracked by git
 
 ### Shorthand wrappers
 
