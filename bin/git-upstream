@@ -90,17 +90,55 @@ get_upstream () {
                 return
             fi
         else
-            upstream="$upstream_remote/$local_branch"
-            if git rev-parse "$upstream_remote" >/dev/null 2>&1; then
-                return
-            else
-                echo "Couldn't determine upstream branch from $remotebranchconf = $upstream" >&2
-                exit 1
-            fi
+            handle_missing_upstream_branch
         fi
     fi
 
     get_svn_upstream
+}
+
+handle_missing_upstream_branch () {
+    # We know which upstream remote to use, but not which
+    # branch in that remote, so try using the local branch
+    # name.
+    upstream="$upstream_remote/$local_branch"
+    if git rev-parse "$upstream" >/dev/null 2>&1; then
+        if [ -t 0 ]; then
+            # Running interactively
+            cat <<EOF
+Remote for $local_branch was set to $upstream_remote but no upstream
+branch was set.  However, $upstream exists.
+Would you like me to set the upstream branch to $local_branch?
+
+EOF
+            echo -n "Type yes to proceed or anything else to abort > "
+            read answer
+            if [ "$answer" = 'yes' ]; then
+                if git config "$upstream_branch_conf" "$local_branch"; then
+                    echo
+                    echo "Set $upstream_branch_conf=$local_branch"
+                    exit 0
+                fi
+            else
+                echo
+                echo "$upstream_branch_conf still not set; aborting."
+                exit 1
+            fi
+        else
+            cat <<EOF >&2
+$upstream_branch_conf was not set but should probably be set to
+$local_branch to match the local branch name.  Please set manually via
+git set-upstream.  Aborting.
+EOF
+            exit 1
+        fi
+    else
+        cat <<EOF >&2
+Couldn't guess which branch of upstream '$upstream_remote' to use :-(
+Please set manually via git set-upstream.  Aborting.
+EOF
+        exit 1
+    fi
 }
 
 root="`git root`"
