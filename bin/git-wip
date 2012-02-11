@@ -1,0 +1,12 @@
+#!/bin/bash -e
+
+# Does this repository have any work in progress,
+# i.e. uncommitted changes, untracked files, or
+# commits out of sync with upstream?
+
+wip=
+
+sh=`git compare-upstream --sh`
+eval "$sh"
+
+(( before + after )) || [ -n "`git status -s`" ]

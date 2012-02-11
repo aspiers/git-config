@@ -12,6 +12,7 @@ Contents include:
 * [`git-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-upstream) - obtain the upstream tracking branch (N.B. depends on `git-head`, `git-root`, and `git-prefix`)
 * [`git-set-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-set-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-root`)
 * [`git-compare-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-compare-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-upstream`, and hence also on `git-root` and and `git-prefix`)
+* [`git-wip`](https://github.com/aspiers/git-config/blob/master/bin/git-wip) - returns true if the current repo has any work in progress, i.e. commits out of sync with upstream, or unmodified/untracked files
 
 ### Helper scripts
 
