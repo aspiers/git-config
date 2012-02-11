@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
+
+head=`git head`
+upstream=`git upstream`
+set -- `git rev-list --count --left-right $upstream...HEAD`
+behind="$1"
+ahead="$2"
+
+if [ "$behind" = 0 -a "$ahead" = 0 ]; then
+    echo "$head is in sync with $upstream"
+elif [ "$behind" != 0 -a "$ahead" != 0 ]; then
+    echo "$head is behind $upstream by $behind commits, and ahead by $ahead"
+elif [ "$behind" = 0 ]; then
+    echo "$head is ahead of $upstream by $ahead commits"
+elif [ "$ahead" = 0 ]; then
+    echo "$head is behind $upstream by $behind commits"
+else
+    echo "BUG in $0!" >&2
+    exit 1
+fi
