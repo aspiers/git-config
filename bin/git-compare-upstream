@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
 

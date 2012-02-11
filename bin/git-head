@@ -5,6 +5,8 @@
 # Hmm.  This is a good example of why people sometimes complain that
 # the git porcelain is ugly.
 
+set -o pipefail
+
 # Parsing porcelain is an ugly approach because it couples the
 # solution to the formatting which could change:
 #git branch | awk '$1 == "*" { print $2 }'
