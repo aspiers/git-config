@@ -1,6 +1,7 @@
 #!/bin/bash
 
-git status "$@"
+git branch -v -v
+git status -s "$@"
 ret=$?
 
 git root >/dev/null 2>&1 && git-check-email
