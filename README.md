@@ -7,12 +7,32 @@ This is my collection of configuration files and utilities for
 
 Contents include:
 
-* [`git-head`](https://github.com/aspiers/git-config/blob/master/bin/git-head) - obtain the current branch
-* [`git-root`](https://github.com/aspiers/git-config/blob/master/bin/git-root) - obtain the absolute path to the root (top-level) directory of the repository we're currently in
-* [`git-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-prefix) - obtain the current directory path relative to the root (top-level) directory of the repository
+### Upstream branch status reporting / management
+
 * [`git-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-upstream) - obtain the upstream tracking branch (N.B. depends on `git-head`, `git-root`, and `git-prefix`)
 * [`git-set-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-set-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-root`)
 * [`git-compare-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-compare-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-upstream`, and hence also on `git-root` and and `git-prefix`)
+
+### Helper scripts
+
+Little shell wrappers to make the git porcelain and higher-level scripts a little more beautiful.
+
+* [`git-head`](https://github.com/aspiers/git-config/blob/master/bin/git-head) - obtain the current branch
+* [`git-root`](https://github.com/aspiers/git-config/blob/master/bin/git-root) - obtain the absolute path to the root (top-level) directory of the repository we're currently in
+* [`git-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-prefix) - obtain the current directory path relative to the root (top-level) directory of the repository
+* [`git-cdup`](https://github.com/aspiers/git-config/blob/master/bin/git-cdup) - obtain the relative path from the current directory to the root (top-level) directory of the repository
+
+### History rewriting
+
+* [`git-rewrite-author`](https://github.com/aspiers/git-config/blob/master/bin/git-rewrite-author) - rewrite the author for a range of commits
+* [`git-rewrite-committer`](https://github.com/aspiers/git-config/blob/master/bin/git-rewrite-committer) - rewrite the committer for a range of commits
+* [`git-sed-range`](https://github.com/aspiers/git-config/blob/master/bin/git-sed-range) - run a sed script over every log message in a range of commits
+
+### Management of remotes
+
+* [`git-url-rewrite`](https://github.com/aspiers/git-config/blob/master/bin/git-url-rewrite) - convenient interface for setting [git URL rewrites via `url.$url.insteadOf`](http://qa-rockstar.livejournal.com/9961.html)
+
+### and more
 
 There are many other handy utilities - feel free to [browse the `bin/` directory](https://github.com/aspiers/git-config/tree/master/bin)!
 
