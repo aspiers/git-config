@@ -1,8 +1,12 @@
 #!/bin/bash
 
-git -c color.ui=always branch -v -v
-git -c color.ui=always status -s "$@"
+status=`git -c color.ui=always status -s "$@"`
 ret=$?
+
+if [ -n "$status" ]; then
+    git -c color.ui=always branch -v -v | grep --color=no '^\*'
+    echo "$status"
+fi
 
 git root >/dev/null 2>&1 && git-check-email
 
