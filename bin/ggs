@@ -1,7 +1,7 @@
 #!/bin/bash
 
-git branch -v -v
-git status -s "$@"
+git -c color.ui=always branch -v -v
+git -c color.ui=always status -s "$@"
 ret=$?
 
 git root >/dev/null 2>&1 && git-check-email
