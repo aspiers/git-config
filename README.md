@@ -32,7 +32,7 @@ Little shell wrappers to make the git porcelain and higher-level scripts a littl
 
 * [`git-url-rewrite`](https://github.com/aspiers/git-config/blob/master/bin/git-url-rewrite) - convenient interface for setting [git URL rewrites via `url.$url.insteadOf`](http://qa-rockstar.livejournal.com/9961.html)
 
-### and more
+### ... and more!
 
 There are many other handy utilities - feel free to [browse the `bin/` directory](https://github.com/aspiers/git-config/tree/master/bin)!
 
