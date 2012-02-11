@@ -24,6 +24,11 @@ Contents include:
 
 * [`git-url-rewrite`](https://github.com/aspiers/git-config/blob/master/bin/git-url-rewrite) - convenient interface for setting [git URL rewrites via `url.$url.insteadOf`](http://qa-rockstar.livejournal.com/9961.html)
 
+### Mapping files/blobs back to commits
+
+* [`git-ls-dir`](https://github.com/aspiers/git-config/blob/master/bin/git-ls-dir) - list files in a git repo tree together with the commits which most recently touched them.
+* [`git-find-blob`](https://github.com/aspiers/git-config/blob/master/bin/git-find-blob) - find which commits contain a given (non-abbreviated) blob
+
 ### Helper scripts
 
 Little shell wrappers to make the git porcelain and higher-level scripts a little more beautiful.
@@ -32,6 +37,10 @@ Little shell wrappers to make the git porcelain and higher-level scripts a littl
 * [`git-root`](https://github.com/aspiers/git-config/blob/master/bin/git-root) - obtain the absolute path to the root (top-level) directory of the repository we're currently in
 * [`git-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-prefix) - obtain the current directory path relative to the root (top-level) directory of the repository
 * [`git-cdup`](https://github.com/aspiers/git-config/blob/master/bin/git-cdup) - obtain the relative path from the current directory to the root (top-level) directory of the repository
+
+### Shorthand wrappers
+
+* [`gg*`](https://github.com/aspiers/git-config/tree/master/bin/) - a whole bunch of wrappers around standard git commands to reduce the number of keystrokes required and add a little bit of polish to the interface here and there
 
 ### ... and more!
 
