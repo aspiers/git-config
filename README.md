@@ -27,7 +27,7 @@ Contents include:
 
 ### Mapping files/blobs back to commits
 
-* [`git-ls-dir`](https://github.com/aspiers/git-config/blob/master/bin/git-ls-dir) - list files in a git repo tree together with the commits which most recently touched them.
+* [`git-ls-dir`](https://github.com/aspiers/git-config/blob/master/bin/git-ls-dir) - list files in a git repo tree together with the commits which most recently touched them ([see a screenshot](http://stackoverflow.com/a/8774800/179332))
 * [`git-find-blob`](https://github.com/aspiers/git-config/blob/master/bin/git-find-blob) - find which commits contain a given (non-abbreviated) blob
 
 ### Helper scripts
