@@ -3,14 +3,32 @@
 This is my collection of configuration files and utilities for
 [git](http://git-scm.com/).
 
+## CONTENTS
+
+Contents include:
+
+* [`git-head`](https://github.com/aspiers/git-config/blob/master/bin/git-head) - obtain the current branch
+* [`git-root`](https://github.com/aspiers/git-config/blob/master/bin/git-root) - obtain the absolute path to the root (top-level) directory of the repository we're currently in
+* [`git-prefix`](https://github.com/aspiers/git-config/blob/master/bin/git-prefix) - obtain the current directory path relative to the root (top-level) directory of the repository
+* [`git-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-upstream) - obtain the upstream tracking branch (N.B. depends on `git-head`, `git-root`, and `git-prefix`)
+* [`git-set-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-set-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-root`)
+* [`git-compare-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-compare-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-upstream`, and hence also on `git-root` and and `git-prefix`)
+
+There are many other handy utilities - feel free to [browse the `bin/` directory](https://github.com/aspiers/git-config/tree/master/bin)!
+
 ## INSTALLATION
 
 This repository is designed to be
 [stowed](http://www.gnu.org/software/stow/) directly into your home
-directory.  However if you only want to cherry-pick bits and pieces
-then you can easily just copy or symlink them in manually.  Just be
-aware that some of the files depend on other files, some of which are
-in this repository, some of which are in other repositories such as
+directory:
+
+    git clone git://github.com/aspiers/git-config.git
+    stow -d . -t ~ git-config
+
+However if you only want to cherry-pick bits and pieces then you can
+easily just copy or symlink them in manually.  Just be aware that some
+of the files depend on other files, some of which are in this
+repository, some of which are in other repositories such as
 https://github.com/aspiers/shell-env.
 
 ## LICENSE
