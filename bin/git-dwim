@@ -132,8 +132,11 @@ sync_with_upstream () {
 
     echo
     echo "git fetch $remote"
-    git fetch "$remote"
     echo
+    if ! git fetch "$remote"; then
+        echo "Failed to fetch $remote; aborting." >&2
+        exit 1
+    fi
     compare_with_upstream "$upstream"
     show_upstream_info "$remote"
 
