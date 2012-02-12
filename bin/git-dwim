@@ -1,0 +1,109 @@
+#!/bin/bash -e
+
+commit_local_changes () {
+    status=`git -c color.ui=always status -s "$@"`
+    if [ -n "$status" ]; then
+        echo "$status"
+        echo
+        if [ -n "$DISPLAY" ]; then
+            echo "Launching git-gui; commit local changes before proceeding with sync ..."
+            echo "Press Control-C to cancel"
+            git gui
+        else
+            echo "\$DISPLAY not set so can't launch git-gui.  Launching $SHELL;"
+            echo "please commit changes via CLI then exit the shell."
+            $SHELL
+        fi
+    fi
+}
+
+compare_with_upstream () {
+    head=`git head`
+    if ! upstream=`git upstream`; then
+        cat <<EOF
+
+Remotes already set:
+--------------------
+
+`git remote -v`
+
+Launching $SHELL; please set correct upstream for $head
+then hit Control-D to continue ...
+EOF
+        $SHELL
+    fi
+
+    if ! upstream=`git upstream 2>/dev/null`; then
+        echo 
+        echo "Upstream still not set for $head; aborting." >&2
+        exit 1
+    fi
+
+    # http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
+
+    set -- `git rev-list --count --left-right $upstream...HEAD`
+    behind="$1"
+    ahead="$2"
+}
+
+show_upstream_info () {
+    git remote -v show -n "$1"
+}
+
+pull_from_upstream () {
+    echo
+    echo -e "\e[1;31m$head is behind $upstream by $behind commits:\e[0m"
+    git log HEAD.."$upstream"
+    echo
+    echo -n "Press Enter to pull missing commits from $upstream, or Control-C to abort > "
+    read
+    echo "Running git pull ..."
+    if ! git pull; then
+        echo "git pull failed; aborting.  Please manually fix and re-run." >&2
+        exit 1
+    fi
+}
+
+push_to_upstream () {
+    echo
+    echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits.\e[0m"
+    git log "$upstream"..HEAD
+    echo
+    echo -n "Press Enter to push new commits to $upstream, or Control-C to abort > "
+    read
+    if ! git push; then
+        echo "git push failed; aborting.  Please manually fix and re-run." >&2
+        exit 1
+    fi
+}
+
+final_check () {
+    echo
+    if git-wip; then
+        echo -e "\e[1;31mThere are still unresolved issues:\e[0m"
+        echo
+        ggs
+    else
+        echo -e "\e[1;32mNo unresolved issues :-)\e[0m"
+    fi
+}
+
+main () {
+    commit_local_changes
+    compare_with_upstream
+
+    remote="${upstream#*/}"
+    show_upstream_info "$remote"
+
+    if [ "$behind" != 0 ]; then
+        pull_from_upstream
+    fi
+
+    if [ "$ahead" != 0 ]; then
+        push_to_upstream
+    fi
+
+    final_check
+}
+
+main
