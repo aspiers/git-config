@@ -100,11 +100,11 @@ push_to_upstream () {
 final_check () {
     echo
     if git-wip; then
-        echo -e "\e[1;31mThere are still unresolved issues:\e[0m"
+        echo -e "\e[1;31mUnresolved issues in $root:\e[0m"
         echo
         ggs
     else
-        echo -e "\e[1;32mNo unresolved issues :-)\e[0m"
+        echo -e "\e[1;32mNo unresolved issues in $root :-)\e[0m"
     fi
 }
 
@@ -126,6 +126,9 @@ sync_with_upstream () {
 }
 
 main () {
+    root="`git root`"
+    root="${root/$HOME/~}"
+
     commit_local_changes
 
     get_upstream
