@@ -17,7 +17,7 @@ commit_local_changes () {
     fi
 }
 
-compare_with_upstream () {
+get_upstream () {
     head=`git head`
     if ! upstream=`git upstream`; then
         cat <<EOF
@@ -38,6 +38,10 @@ EOF
         echo "Upstream still not set for $head; aborting." >&2
         exit 1
     fi
+}
+
+compare_with_upstream () {
+    local upstream="$1"
 
     # http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
 
@@ -51,6 +55,8 @@ show_upstream_info () {
 }
 
 pull_from_upstream () {
+    local upstream="$1"
+
     echo
     echo -e "\e[1;31m$head is behind $upstream by $behind commits:\e[0m"
     git log HEAD.."$upstream"
@@ -65,6 +71,8 @@ pull_from_upstream () {
 }
 
 push_to_upstream () {
+    local upstream="$1"
+
     echo
     echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits.\e[0m"
     git log "$upstream"..HEAD
@@ -88,19 +96,30 @@ final_check () {
     fi
 }
 
-main () {
-    commit_local_changes
-    compare_with_upstream
+sync_with_upstream () {
+    local upstream="$1"
+
+    compare_with_upstream "$upstream"
 
     remote="${upstream#*/}"
     show_upstream_info "$remote"
 
     if [ "$behind" != 0 ]; then
-        pull_from_upstream
+        pull_from_upstream "$upstream"
     fi
 
     if [ "$ahead" != 0 ]; then
-        push_to_upstream
+        push_to_upstream "$upstream"
+    fi
+}
+
+main () {
+    commit_local_changes
+
+    get_upstream
+    sync_with_upstream "$upstream"
+    if [ "$upstream" != 'github' -a -n "`git config remote.github.url`" ]; then
+        sync_with_upstream "github/$head"
     fi
 
     final_check
