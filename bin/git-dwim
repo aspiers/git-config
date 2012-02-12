@@ -146,6 +146,7 @@ main () {
     detect_upstream
     sync_with_upstream "$upstream"
     if [ "$upstream" != 'github' -a -n "`git config remote.github.url`" ]; then
+        echo
         sync_with_upstream "github/$head"
     fi
 
