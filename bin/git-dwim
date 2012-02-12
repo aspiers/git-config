@@ -17,7 +17,7 @@ commit_local_changes () {
     fi
 }
 
-get_upstream () {
+detect_upstream () {
     head=`git head`
     if ! upstream=`git upstream`; then
         cat <<EOF
@@ -143,7 +143,7 @@ main () {
 
     commit_local_changes
 
-    get_upstream
+    detect_upstream
     sync_with_upstream "$upstream"
     if [ "$upstream" != 'github' -a -n "`git config remote.github.url`" ]; then
         sync_with_upstream "github/$head"
