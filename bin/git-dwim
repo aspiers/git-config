@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 commit_local_changes () {
     status=`git -c color.ui=always status -s "$@"`
