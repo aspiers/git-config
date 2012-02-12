@@ -80,6 +80,7 @@ pull_from_upstream () {
 
     echo
     echo -e "\e[1;31m$head is behind $upstream by $behind commits:\e[0m"
+    echo
     git log HEAD.."$upstream"
 
     echo
@@ -98,7 +99,8 @@ push_to_upstream () {
     local upstream="$1"
 
     echo
-    echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits.\e[0m"
+    echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits:\e[0m"
+    echo
     git log "$upstream"..HEAD
 
     echo
