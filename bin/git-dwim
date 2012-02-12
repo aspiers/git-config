@@ -124,8 +124,9 @@ final_check () {
 sync_with_upstream () {
     local upstream="$1"
 
-    compare_with_upstream "$upstream"
     parse_upstream "$upstream"
+    git fetch "$remote"
+    compare_with_upstream "$upstream"
     show_upstream_info "$remote"
 
     if [ "$behind" != 0 ]; then
