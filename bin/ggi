@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# git incoming
+
+upstream="`git upstream`" || exit 1  # git upstream will display the error
+
+echo "HEAD is `ggde`"
+echo -e "Upstream is $upstream\n"
+
+if [ -z "$GIT_PAGER_MODE" ]; then
+    # not being set via a caller such as ggo1 etc.
+    # so choose according to the output format which
+    # we know we can expect from git log
+    export GIT_PAGER_MODE=log
+else
+    # honour the caller's setting
+    :
+fi
+
+. $ZDOTDIR/.shared_rc.d/git-pager
+
+git log "$@" HEAD.."$upstream"
