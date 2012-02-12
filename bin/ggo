@@ -20,8 +20,3 @@ fi
 . $ZDOTDIR/.shared_rc.d/git-pager
 
 git log "$@" "$upstream"..HEAD
-
-#echo "GIT_PAGER was [$GIT_PAGER]"
-
-export GIT_PAGER_MODE=default
-. $ZDOTDIR/.shared_rc.d/git-pager
