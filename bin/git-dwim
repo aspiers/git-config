@@ -87,6 +87,7 @@ pull_from_upstream () {
 
     args="$remote $remote_branch"
     echo "Running git pull $args ..."
+    echo
     if ! git pull $args; then
         echo "git pull $args failed; aborting.  Please manually fix and re-run." >&2
         exit 1
@@ -104,6 +105,7 @@ push_to_upstream () {
     confirm_action "push new commits to $upstream" || return
 
     args="$remote $head"
+    echo
     if ! git push $args; then
         echo "git push $args failed; aborting.  Please manually fix and re-run." >&2
         exit 1
