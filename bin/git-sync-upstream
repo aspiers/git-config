@@ -1,25 +1,59 @@
 #!/bin/bash
 
+error () {
+    echo "$*" >&2
+    exit 1
+}
+
+is_interactive () {
+    [ -t 0 ]
+}
+
+repo_is_clean () {
+    # "clean" == nothing to do except maybe commit untracked files
+    # which would not be harmed by any git operations except git clean -f,
+    # which we won't be doing here!
+    [ -z "`git status --porcelain | egrep -v '^\?\?'`" ]
+}
+
 commit_local_changes () {
     status=`git -c color.ui=always status -s "$@"`
-    if [ -n "$status" ]; then
-        echo "$status"
-        echo
-        if [ -n "$DISPLAY" ]; then
-            echo "Launching git-gui; commit local changes before proceeding with sync ..."
-            echo "Press Control-C to cancel"
-            git gui
+    if [ -z "$status" ]; then
+        return 0 # nothing to do
+    fi
+
+    echo "$status"
+    echo
+
+    if ! is_interactive; then
+        if repo_is_clean; then
+            : # we can still safely proceed with push/pull 
+            return 0
         else
-            echo "\$DISPLAY not set so can't launch git-gui.  Launching $SHELL;"
-            echo "please commit changes via CLI then exit the shell."
-            $SHELL
+            echo "Repo has uncommitted changes."
+            return 1
         fi
+    fi
+
+    if [ -n "$DISPLAY" ]; then
+        echo "Launching git-gui; commit local changes before proceeding with sync ..."
+        echo "Press Control-C to cancel"
+        git gui
+    else
+        echo "\$DISPLAY not set so can't launch git-gui.  Launching $SHELL;"
+        echo "please commit changes via CLI then exit the shell."
+        $SHELL
     fi
 }
 
+# Returns true if detected
 detect_upstream () {
     head=`git head`
     if ! upstream=`git upstream`; then
+        echo "Upstream not set for $head"
+
+        is_interactive || return 1
+
         cat <<EOF
 
 Remotes already set:
@@ -35,9 +69,11 @@ EOF
 
     if ! upstream=`git upstream 2>/dev/null`; then
         echo 
-        echo "Upstream still not set for $head; aborting." >&2
-        exit 1
+        echo "Upstream still not set for $head." >&2
+        return 1
     fi
+
+    return 0
 }
 
 parse_upstream () {
@@ -83,15 +119,47 @@ pull_from_upstream () {
     echo
     git log HEAD.."$upstream"
 
+    if is_interactive; then
+        pull_from_upstream_interactive "$upstream"
+    else
+        safe_pull_from_upstream_batch "$upstream"
+    fi
+}
+
+pull_from_upstream_interactive () {
+    local upstream="$1"
+
+    args="$remote $remote_branch"
     echo
     confirm_action "pull missing commits from $upstream" || return
 
-    args="$remote $remote_branch"
     echo "Running git pull $args ..."
     echo
     if ! git pull $args; then
-        echo "git pull $args failed; aborting.  Please manually fix and re-run." >&2
-        exit 1
+        error "git pull $args failed; aborting.  Please manually fix and re-run."
+    fi
+}
+
+safe_pull_from_upstream_batch () {
+    local upstream="$1"
+
+    if ! repo_is_clean; then
+        echo "Repo has uncommitted changes; cannot safely attempt automatic merge."
+        return 1
+    fi
+
+    git merge --no-commit --no-ff "$upstream"
+    status=$?
+    if git status --porcelain | egrep '^(U|.U)'; then
+        [ "$status" = 0 ] && error "git merge --no-commit succeeded with unmerged files?!"
+        echo
+        echo "In non-interactive mode; aborted merge."
+        git reset --hard
+        return 1
+    else
+        [ "$status" != 0 ] && error "git merge --no-commit failed with no unmerged files?!"
+        git reset --hard
+        git merge "$upstream" || error "batch git merge failed"
     fi
 }
 
@@ -103,14 +171,15 @@ push_to_upstream () {
     echo
     git log "$upstream"..HEAD
 
-    echo
-    confirm_action "push new commits to $upstream" || return
+    if is_interactive; then
+        echo
+        confirm_action "push new commits to $upstream" || return
+    fi
 
     args="$remote $head"
     echo
     if ! git push $args; then
-        echo "git push $args failed; aborting.  Please manually fix and re-run." >&2
-        exit 1
+        error "git push $args failed; aborting.  Please manually fix and re-run."
     fi
 }
 
@@ -134,11 +203,15 @@ sync_with_upstream () {
     echo "git fetch $remote"
     echo
     if ! git fetch "$remote"; then
-        echo "Failed to fetch $remote; aborting." >&2
-        exit 1
+        error "Failed to fetch $remote; aborting."
     fi
     compare_with_upstream "$upstream"
-    show_upstream_info "$remote"
+    is_interactive && show_upstream_info "$remote"
+
+    if [ "$behind" = 0 ] && [ "$ahead" = 0 ]; then
+        echo "Already in sync with upstream."
+        return 0
+    fi
 
     if [ "$behind" != 0 ]; then
         pull_from_upstream "$upstream"
@@ -149,19 +222,45 @@ sync_with_upstream () {
     fi
 }
 
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me UPSTREAM
+EOF
+    exit "$exit_code"
+}
+
 main () {
     root="`git root`"
     root="${root/$HOME/~}"
 
-    commit_local_changes
-
-    detect_upstream
-    sync_with_upstream "$upstream"
-    if [ "$upstream" != 'github' -a -n "`git config remote.github.url`" ]; then
-        sync_with_upstream "github/$head"
+    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+        usage 0
     fi
 
+    [ $# -gt 1 ] && usage
+
+    if [ -n "$1" ]; then
+        upstream="$1"
+    else
+        detect_upstream
+    fi
+
+    commit_local_changes
+    sync_with_upstream "$upstream"
     final_check
 }
 
-main
+main "$@"
