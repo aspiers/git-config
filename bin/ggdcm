@@ -20,7 +20,7 @@ fi
 error_count=0
 
 while read sha1; do
-  if ggdc $sha1^ $sha1 >/dev/null; then
+  if ggdch $sha1^ $sha1 >/dev/null; then
     echo "`git describe --all --contains $sha1` has no whitespace errors"
     continue
   fi
@@ -31,7 +31,7 @@ while read sha1; do
   (
     git --no-pager log -n1 --color $sha1 | git name-rev --stdin
     echo
-    ggdc --color $sha1^ $sha1
+    ggdch --color $sha1^ $sha1
   ) | less -F
   echo ----------------------------------------------------------------------
 done < <( gglh --reverse "$range" )
