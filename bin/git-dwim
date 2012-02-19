@@ -1,0 +1,12 @@
+#!/bin/bash
+
+git sync-upstream || exit 1
+
+if [ "`git upstream`" != 'github' -a -n "`git config remote.github.url`" ]; then
+    if ! head=`git head`; then
+        echo "git head failed; aborting!" >&2
+        exit 1
+    fi
+
+    git sync-upstream "github/$head"
+fi
