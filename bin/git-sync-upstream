@@ -255,7 +255,7 @@ main () {
     if [ -n "$1" ]; then
         upstream="$1"
     else
-        detect_upstream
+        detect_upstream || exit 1
     fi
 
     commit_local_changes
