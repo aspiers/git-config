@@ -1,0 +1,4 @@
+#compdef ggf
+
+#autoload +X _git
+__git_remotes "$@"
