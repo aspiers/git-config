@@ -53,3 +53,6 @@ git config --global core.excludesfile ~/.gitignore
 
 # sed 's/^#/\\#/g' ~/.cvsignore >> ~/.gitignore
 
+git url-rewrite arctic:         ssh://adam@arctic.adamspiers.org/home/adam/
+git url-rewrite coral:          ssh://adam@coral.adamspiers.org/home/adam/
+git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
