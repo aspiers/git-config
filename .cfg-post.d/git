@@ -53,6 +53,19 @@ git config --global core.excludesfile ~/.gitignore
 
 # sed 's/^#/\\#/g' ~/.cvsignore >> ~/.gitignore
 
-git url-rewrite arctic:         ssh://adam@arctic.adamspiers.org/home/adam/
-git url-rewrite coral:          ssh://adam@coral.adamspiers.org/home/adam/
-git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
+. ~/lib/libhost.sh
+read_localhost_nickname
+
+for h in arctic coral; do
+    if [ "$localhost_nickname" = $h ]; then
+        git url-rewrite $h: /home/adam/
+    else
+        git url-rewrite $h: ssh://adam@$h.adamspiers.org/home/adam/
+    fi
+done
+
+if [ "$localhost_nickname" = 'coral' ]; then
+    git url-rewrite adamspiers.org: /home/adam/.srv/git/
+else
+    git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
+fi
