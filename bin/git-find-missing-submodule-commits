@@ -18,7 +18,7 @@ usage () {
 Usage: $me [OPTIONS] COMMIT-REF [COMMIT-REF ...] [-- SUBMODULE ...]
 Options:
   -v, --verbose  Verbose output
-  -b, --blame    Find commits introducing invalid submodule commit reference
+  -b, --blame    Find commits introducing dangling references to submodule commits
   -f, --format   Format for commits shown with --blame option [medium]
   -h, --help     Show this help
 
