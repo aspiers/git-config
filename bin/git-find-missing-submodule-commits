@@ -32,6 +32,7 @@ Valid refs are of the form:
 etc.
 
 If no submodules are given, obtains a list from git config.
+Submodules should be relative paths from the root of the git repo.
 EOF
     exit "$exit_code" 
 }
