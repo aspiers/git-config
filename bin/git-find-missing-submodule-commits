@@ -15,9 +15,12 @@ usage () {
     fi
 
     cat <<EOF >&2
-Usage: $me [-v] COMMIT-REF [COMMIT-REF ...] [-- SUBMODULE ...]
-
-  -v  Verbose output
+Usage: $me [OPTIONS] COMMIT-REF [COMMIT-REF ...] [-- SUBMODULE ...]
+Options:
+  -v, --verbose  Verbose output
+  -b, --blame    Find commits introducing invalid submodule commit reference
+  -f, --format   Format for commits shown with --blame option [medium]
+  -h, --help     Show this help
 
 For each commit ref given, checks that each given submodule in the
 commit tree references a valid commit in the submodule.
@@ -38,15 +41,33 @@ EOF
 }
 
 parse_args () {
-    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
-        usage 0
-    fi
-
     verbose=
-    if [ "$1" == '-v' ]; then
-        verbose=true
-        shift
-    fi
+    blame=
+    format=medium
+
+    while [ -n "$1" ]; do
+        case "$1" in
+            -h|--help)
+                shift
+                usage 0
+                ;;
+            -v|--verbose)
+                verbose=true
+                shift
+                ;;
+            -b|--blame)
+                blame=true
+                shift
+                ;;
+            -f|--format)
+                format="$2"
+                shift 2
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
 
     while [ -n "$1" ]; do
         if [ "$1" == '--' ]; then
@@ -72,6 +93,12 @@ parse_args () {
     fi
 }
 
+find_culprit () {
+    local ref="$1"
+    local subcommit="$2"
+    git --no-pager log -n1 --pretty="$format" -S"$subcommit" "$ref"
+}
+
 verbose () {
     if [ -n "$verbose" ]; then
         echo "$*"
@@ -81,6 +108,8 @@ verbose () {
 declare -a refs submodules
 parse_args "$@"
 
+repo_root=`pwd`
+
 git for-each-ref "${refs[@]}" | 
 while read hash objtype ref; do
     if [ "$objtype" != 'commit' ] && [ "$objtype" != 'tag' ]; then
@@ -89,22 +118,26 @@ while read hash objtype ref; do
     fi
 
     if [ -z "$verbose" ]; then
-        human_ref="${ref#refs/*/}"
+        short_ref="${ref#refs/*/}"
     else
-        human_ref="$ref"
+        short_ref="$ref"
     fi
     for submodule in "${submodules[@]}"; do
         if subcommit=$( git rev-parse -q --verify $ref:$submodule ); then
             (
                 cd $submodule
                 if ! git cat-file -e $subcommit >/dev/null; then
-                    echo "$human_ref: $submodule/ missing $subcommit"
+                    echo "$short_ref: $submodule/ missing $subcommit"
+                    if [ -n "$blame" ]; then
+                        cd "$repo_root"
+                        find_culprit "$short_ref" "$subcommit"
+                    fi
                 else
-                    verbose "$human_ref: $submodule/ ok $subcommit"
+                    verbose "$short_ref: $submodule/ ok $subcommit"
                 fi
             )
         else
-            verbose "$human_ref: no reference to $submodule"
+            verbose "$short_ref: no reference to $submodule"
         fi
     done
 done
