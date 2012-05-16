@@ -87,19 +87,23 @@ while read hash objtype ref; do
         continue
     fi
 
-    href="${ref#refs/*/}"
+    if [ -z "$verbose" ]; then
+        human_ref="${ref#refs/*/}"
+    else
+        human_ref="$ref"
+    fi
     for submodule in "${submodules[@]}"; do
         if subcommit=$( git rev-parse -q --verify $ref:$submodule ); then
             (
                 cd $submodule
                 if ! git cat-file -e $subcommit >/dev/null; then
-                    echo "$href: $submodule/ missing $subcommit"
+                    echo "$human_ref: $submodule/ missing $subcommit"
                 else
-                    verbose "$href: $submodule/ ok $subcommit"
+                    verbose "$human_ref: $submodule/ ok $subcommit"
                 fi
             )
         else
-            verbose "$href: no reference to $submodule"
+            verbose "$human_ref: no reference to $submodule"
         fi
     done
 done
