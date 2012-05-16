@@ -82,7 +82,7 @@ parse_args "$@"
 
 git for-each-ref "${refs[@]}" | 
 while read hash objtype ref; do
-    if [ "$objtype" != 'commit' ]; then
+    if [ "$objtype" != 'commit' ] && [ "$objtype" != 'tag' ]; then
         echo "Warning: ignoring $objtype $ref" >&2
         continue
     fi
