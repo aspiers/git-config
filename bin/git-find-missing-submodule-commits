@@ -1,0 +1,105 @@
+#!/bin/bash
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me [-v] COMMIT-REF [COMMIT-REF ...] [-- SUBMODULE ...]
+
+  -v  Verbose output
+
+For each commit ref given, checks that each given submodule in the
+commit tree references a valid commit in the submodule.
+
+Valid refs are of the form:
+
+    refs/heads
+    refs/heads/master
+    refs/remotes
+    refs/remotes/myremote
+
+etc.
+
+If no submodules are given, obtains a list from git config.
+EOF
+    exit "$exit_code" 
+}
+
+parse_args () {
+    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+        usage 0
+    fi
+
+    verbose=
+    if [ "$1" == '-v' ]; then
+        verbose=true
+        shift
+    fi
+
+    while [ -n "$1" ]; do
+        if [ "$1" == '--' ]; then
+            shift
+            break
+        fi
+        refs+=( "$1" )
+        shift
+    done
+
+    verbose "Checking refs: ${refs[*]}"
+
+    if [ -n "$1" ]; then
+        submodules=( "$@" )
+        verbose "Using submodules from CLI: ${submodules[*]}"
+    else
+        while read key val; do
+            submodule="${key#submodule.}"
+            submodule="${submodule%.url}"
+            submodules+=( "$submodule" )
+        done < <( git config --get-regexp 'submodule\.' )
+        verbose "Using submodules from git config: ${submodules[*]}"
+    fi
+}
+
+verbose () {
+    if [ -n "$verbose" ]; then
+        echo "$*"
+    fi
+}
+
+declare -a refs submodules
+parse_args "$@"
+
+git for-each-ref "${refs[@]}" | 
+while read hash objtype ref; do
+    if [ "$objtype" != 'commit' ]; then
+        echo "Warning: ignoring $objtype $ref" >&2
+        continue
+    fi
+
+    href="${ref#refs/*/}"
+    for submodule in "${submodules[@]}"; do
+        if subcommit=$( git rev-parse -q --verify $ref:$submodule ); then
+            (
+                cd $submodule
+                if ! git cat-file -e $subcommit >/dev/null; then
+                    echo "$href: $submodule/ missing $subcommit"
+                else
+                    verbose "$href: $submodule/ ok $subcommit"
+                fi
+            )
+        else
+            verbose "$href: no reference to $submodule"
+        fi
+    done
+done
