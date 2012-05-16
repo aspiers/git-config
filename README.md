@@ -30,6 +30,10 @@ Contents include:
 * [`git-ls-dir`](https://github.com/aspiers/git-config/blob/master/bin/git-ls-dir) - list files in a git repo tree together with the commits which most recently touched them ([see a screenshot](http://stackoverflow.com/a/8774800/179332))
 * [`git-find-blob`](https://github.com/aspiers/git-config/blob/master/bin/git-find-blob) - find which commits contain a given (non-abbreviated) blob
 
+### Sanity-checking submodule references
+
+* [`git-find-missing-submodule-commits`](https://github.com/aspiers/git-config/blob/master/bin/git-find-missing-submodule-commits) - find dangling references to submodule commits
+
 ### Helper scripts
 
 Little shell wrappers to make the git porcelain and higher-level scripts a little more beautiful.
