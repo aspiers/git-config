@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Git SuBmodule Update Rebase
+
+exec git submodule update --rebase "$@"

@@ -1,0 +1,3 @@
+#!/usr/bin/ruby -p
+
+$_.gsub! /Entering '(.+)'(\e\[\d+(;\d+)*m)?\n/, "\\1:\\2\t"

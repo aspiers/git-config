@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Git SuBmodule Foreach
+
+exec git submodule foreach "$@" | perl -pe "s/^(Entering '.+)/\e[0;1m\$1\e[0m/"

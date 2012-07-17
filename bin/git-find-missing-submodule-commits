@@ -1,0 +1,143 @@
+#!/bin/bash
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me [OPTIONS] COMMIT-REF [COMMIT-REF ...] [-- SUBMODULE ...]
+Options:
+  -v, --verbose  Verbose output
+  -b, --blame    Find commits introducing dangling references to submodule commits
+  -f, --format   Format for commits shown with --blame option [medium]
+  -h, --help     Show this help
+
+For each commit ref given, checks that each given submodule in the
+commit tree references a valid commit in the submodule.
+
+Valid refs are of the form:
+
+    refs/heads
+    refs/heads/master
+    refs/remotes
+    refs/remotes/myremote
+
+etc.
+
+If no submodules are given, obtains a list from git config.
+Submodules should be relative paths from the root of the git repo.
+EOF
+    exit "$exit_code" 
+}
+
+parse_args () {
+    verbose=
+    blame=
+    format=medium
+
+    while [ -n "$1" ]; do
+        case "$1" in
+            -h|--help)
+                shift
+                usage 0
+                ;;
+            -v|--verbose)
+                verbose=true
+                shift
+                ;;
+            -b|--blame)
+                blame=true
+                shift
+                ;;
+            -f|--format)
+                format="$2"
+                shift 2
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    while [ -n "$1" ]; do
+        if [ "$1" == '--' ]; then
+            shift
+            break
+        fi
+        refs+=( "$1" )
+        shift
+    done
+
+    verbose "Checking refs: ${refs[*]}"
+
+    if [ -n "$1" ]; then
+        submodules=( "$@" )
+        verbose "Using submodules from CLI: ${submodules[*]}"
+    else
+        while read key val; do
+            submodule="${key#submodule.}"
+            submodule="${submodule%.url}"
+            submodules+=( "$submodule" )
+        done < <( git config --get-regexp 'submodule\.' )
+        verbose "Using submodules from git config: ${submodules[*]}"
+    fi
+}
+
+find_culprit () {
+    local ref="$1"
+    local subcommit="$2"
+    git --no-pager log -n1 --pretty="$format" -S"$subcommit" "$ref"
+}
+
+verbose () {
+    if [ -n "$verbose" ]; then
+        echo "$*"
+    fi
+}
+
+declare -a refs submodules
+parse_args "$@"
+
+repo_root=`pwd`
+
+git for-each-ref "${refs[@]}" | 
+while read hash objtype ref; do
+    if [ "$objtype" != 'commit' ] && [ "$objtype" != 'tag' ]; then
+        echo "Warning: ignoring $objtype $ref" >&2
+        continue
+    fi
+
+    if [ -z "$verbose" ]; then
+        short_ref="${ref#refs/*/}"
+    else
+        short_ref="$ref"
+    fi
+    for submodule in "${submodules[@]}"; do
+        if subcommit=$( git rev-parse -q --verify $ref:$submodule ); then
+            (
+                cd $submodule
+                if ! git cat-file -e $subcommit >/dev/null; then
+                    echo "$short_ref: $submodule/ missing $subcommit"
+                    if [ -n "$blame" ]; then
+                        cd "$repo_root"
+                        find_culprit "$short_ref" "$subcommit"
+                    fi
+                else
+                    verbose "$short_ref: $submodule/ ok $subcommit"
+                fi
+            )
+        else
+            verbose "$short_ref: no reference to $submodule"
+        fi
+    done
+done

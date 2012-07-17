@@ -48,8 +48,8 @@ sub get_file_list {
     my $cmd = "git ls-tree --full-name $commitish @ARGV";
     open IN, "$cmd |" or die "Failed to run $cmd: $!\n";
     while (<IN>) {
-        if (/^\S+\s+blob \S+\s+(\S+)$/) {
-            my $filename = $1;
+        if (/^\S+\s+(blob|commit) \S+\s+(\S+)$/) {
+            my $filename = $2;
             $unknown{$filename}++;
         }
     }
