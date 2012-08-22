@@ -4,8 +4,10 @@
 
 upstream="`git upstream`" || exit 1  # git upstream will display the error
 
-echo "HEAD is `ggde`"
-echo -e "Upstream is $upstream\n"
+if [ -t 1 ]; then
+    echo "HEAD is `ggde`"
+    echo -e "Upstream is $upstream\n"
+fi
 
 if [ -z "$GIT_PAGER_MODE" ]; then
     # not being set via a caller such as ggo1 etc.
