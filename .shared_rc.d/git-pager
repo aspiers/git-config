@@ -17,6 +17,7 @@ case "$GIT_PAGER_MODE" in
         git_pager_regexp='^(commit [0-9a-f]{7}.*|diff .*)'
         ;;
     oneline)
+        # FIXME: what's the idea behind this?
         git_pager_regexp='^[0-9a-f]{7}[0-9a-f]*'
         ;;
     default|"")
