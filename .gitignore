@@ -47,3 +47,4 @@ autom4te.cache
 .autosync.pid
 .osc
 _service:*
+.kdirstat.cache.gz
