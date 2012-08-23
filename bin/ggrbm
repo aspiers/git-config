@@ -27,6 +27,11 @@ if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
     usage
 fi
 
+if [ "$1" == '-i' ]; then
+    interactive=-i
+    shift
+fi
+
 root="`git root`"
 if [ -z "$root" ]; then
     echo "git root failed; aborting" >&2
@@ -65,9 +70,9 @@ egrep -v '^ *(#|$)' "$conf" | while read -a args; do
     fi
 
     echo
-    echo "git rebase ${args[*]}"
+    echo "git rebase $interactive ${args[*]}"
     rebase_had_issues=
-    if ! git rebase "${args[@]}"; then
+    if ! git rebase $interactive "${args[@]}"; then
         rebase_had_issues=y
         while [ -e "$root/.git/rebase-apply" ]; do
             echo
