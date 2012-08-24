@@ -17,16 +17,12 @@ Usage: $ME <blob> [<git-log arguments ...>]
 Options:
   -h, --help           Show this help
 
-Finds which commit has the given blob.
+Finds which commits have the given blob.
 EOUSAGE
 }
 
-usage if not @ARGV or $ARGV[0] eq '-h' or $ARGV[0] eq '--help';
-
-my $obj_name = shift;
-
 sub check_tree {
-    my ($tree) = @_;
+    my ($tree, $obj_name) = @_;
     my @subtree;
 
     {
@@ -41,12 +37,26 @@ sub check_tree {
         }
     }
 
-    check_tree($_) && return 1 for @subtree;
+    check_tree($_, $obj_name) && return 1 for @subtree;
 
     return;
 }
 
 memoize 'check_tree';
+
+usage if not @ARGV or $ARGV[0] eq '-h' or $ARGV[0] eq '--help';
+
+my $blob_arg = shift;
+open my $rev_parse, '-|', git => 'rev-parse' => '--verify', $blob_arg
+    or die "Couldn't open pipe to git-rev-parse: $!\n"; 
+
+my $obj_name = <$rev_parse>; 
+chomp $obj_name; 
+if (!close $rev_parse or $obj_name !~ /^[0-9a-f]{40}$/) {
+    die "Couldn't expand passed blob.\n";
+}
+
+print "(full blob is $obj_name)\n" if $obj_name ne $blob_arg;
 
 open my $log, '-|', git => log => @ARGV, '--pretty=format:%T %h %s'
     or die "Couldn't open pipe to git-log: $!\n";
@@ -54,5 +64,5 @@ open my $log, '-|', git => log => @ARGV, '--pretty=format:%T %h %s'
 while (<$log>) {
     chomp;
     my ( $tree, $commit, $subject ) = split " ", $_, 3;
-    print "$commit $subject\n" if check_tree( $tree );
+    print "$commit $subject\n" if check_tree($tree, $obj_name);
 }
