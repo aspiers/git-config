@@ -7,8 +7,21 @@ use warnings;
 
 use Memoize;
 
-die "usage: git-find-blob <blob> [<git-log arguments ...>]\n"
-    if not @ARGV;
+sub usage {
+  warn @_, "\n" if @_;
+
+  (my $ME = $0) =~ s,.*/,,;
+
+  die <<EOUSAGE;
+Usage: $ME <blob> [<git-log arguments ...>]
+Options:
+  -h, --help           Show this help
+
+Finds which commit has the given blob.
+EOUSAGE
+}
+
+usage if not @ARGV or $ARGV[0] eq '-h' or $ARGV[0] eq '--help';
 
 my $obj_name = shift;
 
