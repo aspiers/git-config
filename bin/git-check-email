@@ -11,4 +11,7 @@ You should type something like:
   git config user.email x@adamspiers.org
 
 EOF
+    exit 1
 fi
+
+exit 0
