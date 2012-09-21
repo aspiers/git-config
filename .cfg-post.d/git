@@ -26,6 +26,9 @@ git config --global pager.diff-tree true
 
 git config --global rebase.autosquash true
 
+git config --global push.default >/dev/null || \
+    git config --global push.default upstream
+
 ##############################################################################
 # set up .gitignore from .cvsignore
 
