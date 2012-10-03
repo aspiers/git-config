@@ -48,3 +48,4 @@ autom4te.cache
 .osc
 _service:*
 .kdirstat.cache.gz
+.*.mscz,
