@@ -122,7 +122,7 @@ pull_from_upstream () {
     if is_interactive; then
         pull_from_upstream_interactive "$upstream"
     else
-        safe_pull_from_upstream_batch "$upstream"
+        safe_merge_with_upstream_batch "$upstream"
     fi
 }
 
@@ -140,7 +140,7 @@ pull_from_upstream_interactive () {
     fi
 }
 
-safe_pull_from_upstream_batch () {
+safe_merge_with_upstream_batch () {
     local upstream="$1"
 
     if ! repo_is_clean; then
@@ -163,6 +163,49 @@ safe_pull_from_upstream_batch () {
     fi
 }
 
+rebase_on_upstream () {
+    local upstream="$1"
+
+    echo
+    echo -e "\e[1;31m$head is behind $upstream by $behind commits:\e[0m"
+    echo
+    git log HEAD.."$upstream"
+
+    if is_interactive; then
+        rebase_on_upstream_interactive "$upstream"
+    else
+        safe_merge_with_upstream_batch "$upstream"
+    fi
+}
+
+rebase_on_upstream_interactive () {
+    local upstream="$1"
+
+    echo
+    confirm_action "rebase on missing commits from $upstream" || return
+
+    echo "Running git rebase ..."
+    echo
+    if ! git rebase; then
+        error "git rebase failed; aborting.  Please manually fix and re-run."
+    fi
+}
+
+safe_rebase_on_upstream_batch () {
+    local upstream="$1"
+
+    if ! repo_is_clean; then
+        echo "Repo has uncommitted changes; cannot safely attempt automatic rebase."
+        return 1
+    fi
+
+    if ! git rebase "$upstream"; then
+        echo "Automatic rebase failed; aborting rebase."
+        git rebase --abort
+        return 1
+    fi
+}
+
 push_to_upstream () {
     local upstream="$1"
 
@@ -171,15 +214,38 @@ push_to_upstream () {
     echo
     git log "$upstream"..HEAD
 
+    HOST_NAME_FILE=$HOME/.localhost-nickname
+    if [ -f "$HOST_NAME_FILE" ] && src="$(<$HOST_NAME_FILE)" && [ -n "$src" ]; then
+        args="$remote $head:refs/remotes/$src/$head"
+        echo
+        if ! git push $args; then
+            error "git push $args failed; aborting.  Please manually fix and re-run."
+        fi
+    else
+        echo >&2
+        echo "Could not determine remote name for local repo in upstream repo; skipping update of remote tracking branch." >&2
+    fi
+
     if is_interactive; then
         echo
         confirm_action "push new commits to $upstream" || return
     fi
 
+    # See http://stackoverflow.com/questions/13015101/how-to-programmatically-predict-when-git-push-will-result-in-branch-is-currentl
     args="$remote $head"
     echo
-    if ! git push $args; then
-        error "git push $args failed; aborting.  Please manually fix and re-run."
+    out=$( git push $args 2>&1 )
+    success=$?
+    echo "$out"
+    if [ $success != 0 ]; then
+        case "$out" in
+            *'remote rejected'*)
+                echo "Ignoring error caused by pushing to non-bare repository."
+                ;;
+            *)
+                error "git push $args failed; aborting.  Please manually fix and re-run."
+                ;;
+        esac
     fi
 }
 
@@ -214,7 +280,8 @@ sync_with_upstream () {
     fi
 
     if [ "$behind" != 0 ]; then
-        pull_from_upstream "$upstream"
+        rebase_on_upstream "$upstream"
+        #pull_from_upstream "$upstream"
     fi
 
     if [ "$ahead" != 0 ]; then
