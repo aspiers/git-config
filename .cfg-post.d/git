@@ -29,6 +29,8 @@ git config --global rebase.autosquash true
 git config --global push.default >/dev/null || \
     git config --global push.default upstream
 
+git config --global receive.denyCurrentBranch refuse
+
 ##############################################################################
 # set up .gitignore from .cvsignore
 
