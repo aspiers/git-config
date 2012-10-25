@@ -76,7 +76,7 @@ else
 fi
 
 git url-rewrite github:    git@github.com:aspiers/
-git url-rewrite gitorious: git://gitorious.org/aspiers/
+git url-rewrite gitorious: git@gitorious.org:~aspiers/
 
 git config --global sendemail.suppressfrom true
 git config --global sendemail.smtpserver `which msmtp-personal`
