@@ -80,6 +80,7 @@ git url-rewrite gitorious: git@gitorious.org:~aspiers/
 
 git config --global sendemail.suppressfrom true
 git config --global sendemail.smtpserver `which msmtp-personal`
+git config --global sendemail.chainreplyto false
 
 # --envelope-sender=auto not needed with msmtp-personal which uses msmtp --read-envelope-from
 #git config --global sendemail.envelopesender auto
