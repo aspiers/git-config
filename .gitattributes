@@ -1,0 +1,11 @@
+*.bibtex   diff=bibtex
+*.cpp      diff=cpp
+*.md       diff=markdown
+*.pl       diff=perl
+*.perl     diff=perl
+*.php      diff=php
+*.py       diff=python
+*.python   diff=python
+*.rb       diff=ruby
+*.ruby     diff=ruby
+*.tex      diff=tex
