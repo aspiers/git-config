@@ -29,8 +29,12 @@ get_rewrites () {
     git config --global --list | \
         perl -lne '
             if (/^url\.(.+)\.(push)?insteadOf=(.+)$/i) {
-                print(($2 ? "PUSH " : "") . "$3 -> $1");
-            }'
+                $abbrev  = sprintf "%-15s", $3;
+                $full = $1;
+                $abbrev =~ s/ {0,5}$/ PUSH/ if $2;
+                print("$abbrev -> $full");
+            }' | \
+        sort
 }
 
 get_rewrite () {
