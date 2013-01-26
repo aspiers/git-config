@@ -77,8 +77,17 @@ else
     git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
 fi
 
-git url-rewrite github:    git@github.com:aspiers/
-git url-rewrite gitorious: git@gitorious.org:~aspiers/
+git url-rewrite    github: git@github.com:aspiers/
+#git url-rewrite    github: https://github.com/aspiers/
+git url-rewrite -p github: git://github.com/aspiers/
+
+git url-rewrite    gitorious: git://gitorious.org/~aspiers/
+#git url-rewrite    gitorious: https://git.gitorious.org/~aspiers/
+git url-rewrite -p gitorious: git@gitorious.org:~aspiers/
+
+# These require a .git suffix
+git url-rewrite    savannah: git://git.savannah.gnu.org/
+git url-rewrite -p savannah: ssh://aspiers@git.sv.gnu.org/srv/git/
 
 git config --global sendemail.suppressfrom true
 git config --global sendemail.smtpserver `which msmtp-personal`
