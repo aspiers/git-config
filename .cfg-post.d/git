@@ -77,9 +77,11 @@ else
     git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
 fi
 
-git url-rewrite    github: git@github.com:aspiers/
+# HTTP is supposedly less efficient than git://
+
+git url-rewrite    github: git://github.com/aspiers/
 #git url-rewrite    github: https://github.com/aspiers/
-git url-rewrite -p github: git://github.com/aspiers/
+git url-rewrite -p github: git@github.com:aspiers/
 
 git url-rewrite    gitorious: git://gitorious.org/~aspiers/
 #git url-rewrite    gitorious: https://git.gitorious.org/~aspiers/
