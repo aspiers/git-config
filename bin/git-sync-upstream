@@ -206,19 +206,14 @@ safe_rebase_on_upstream_batch () {
     fi
 }
 
-push_to_upstream () {
-    local upstream="$1"
-
-    echo
-    echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits:\e[0m"
-    echo
-    git log "$upstream"..HEAD
-
+push_to_upstreams_remote () {
     HOST_NAME_FILE=$HOME/.localhost-nickname
     if [ -f "$HOST_NAME_FILE" ] && src="$(<$HOST_NAME_FILE)" && [ -n "$src" ]; then
         args="$remote $head:refs/remotes/$src/$head"
         echo
-        if ! git push $args; then
+        # Note that we need -f because the local branch could have been
+        # rewritten since the last time this was run.
+        if ! git push -f $args; then
             error "git push $args failed; aborting.  Please manually fix and re-run."
         fi
     else
@@ -230,8 +225,9 @@ push_to_upstream () {
         echo
         confirm_action "push new commits to $upstream" || return
     fi
+}
 
-    # See http://stackoverflow.com/questions/13015101/how-to-programmatically-predict-when-git-push-will-result-in-branch-is-currentl
+push_to_upstreams_local () {
     args="$remote $head"
     echo
     out=$( git push $args 2>&1 )
@@ -247,6 +243,28 @@ push_to_upstream () {
                 ;;
         esac
     fi
+}
+
+push_to_upstream () {
+    local upstream="$1"
+
+    echo
+    echo -e "\e[1;33m$head is ahead of $upstream by $ahead commits:\e[0m"
+    echo
+    git log "$upstream"..HEAD
+
+    # Since the upstream could be non-bare, a normal push could fail.
+    # So we first push to the upstream's remote tracking branch
+    # representing our local repository, so that the upstream is
+    # guaranteed to contain a copy of our local version, even if not
+    # in its local branch.
+    #
+    # See the question I posed on stackoverflow which noone has
+    # answered yet:
+    #   http://stackoverflow.com/questions/13015101/how-to-programmatically-predict-when-git-push-will-result-in-branch-is-currentl
+    push_to_upstreams_remote
+
+    push_to_upstreams_local
 }
 
 final_check () {
