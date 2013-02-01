@@ -50,11 +50,11 @@ my $blob_arg = shift;
 open my $rev_parse, '-|', git => 'rev-parse' => '--verify', $blob_arg
     or die "Couldn't open pipe to git-rev-parse: $!\n"; 
 
-my $obj_name = <$rev_parse>; 
-chomp $obj_name; 
-if (!close $rev_parse or $obj_name !~ /^[0-9a-f]{40}$/) {
-    die "Couldn't expand passed blob.\n";
-}
+chomp(my $obj_name = <$rev_parse> || '');
+die "git rev-parse --verify $blob_arg failed\n"
+    unless close($rev_parse);
+die "git rev-parse returned unexpected output: $obj_name\n"
+    unless $obj_name !~ /^[0-9a-f]{40}$/;
 
 print "(full blob is $obj_name)\n" if $obj_name ne $blob_arg;
 
