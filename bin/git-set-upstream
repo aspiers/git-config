@@ -31,7 +31,9 @@ set_upstream () {
     local_branch="$1"
     remote_ref="$2"
 
-    if git branch -h 2>&1 | grep -q -- --set-upstream; then
+    if git branch -h 2>&1 | grep -q -- --set-upstream-to; then
+        git branch --set-upstream-to "$remote_ref" "$local_branch" 
+    elif git branch -h 2>&1 | grep -q -- --set-upstream; then
         git branch --set-upstream "$local_branch" "$remote_ref"
     else
         git rev-parse "$remote_ref" >/dev/null || exit 1
