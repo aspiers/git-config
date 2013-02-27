@@ -1,4 +1,4 @@
-#compdef gga ggb ggbmv ggci ggco ggd ggh ggk ggl ggmv ggr ggrb ggrl ggs ggt
+#compdef gga ggb ggbmv ggci ggco ggd ggh ggk ggl ggmv ggr ggrb ggrbi ggrl ggs ggt
 
 # Note that as of 4.3.4 there is a bug in _git that the invocation of
 # _call_function to the helper function for the specific command (such
@@ -19,7 +19,8 @@ case "$service" in
   ggl)   git_fn=log       ;;
   ggmv)  git_fn=mv        ;;
   ggr)   git_fn=reset     ;;
-  ggrb)  git_fn=rebase    ;;
+  ggrb|ggrbi)
+         git_fn=rebase    ;;
 #  ggrl)  git_fn=reflog    ;;
 #  ggrm)  git_fn=rm        ;;
   ggs)   git_fn=status    ;;
