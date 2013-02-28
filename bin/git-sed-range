@@ -18,6 +18,8 @@ usage () {
 Usage:
   # remove 'Bug 123456 -' prefix from every commit log in range
   $me '1 { s/^Bug 123456 -// }' REVISION-RANGE
+
+REVISION-RANGE defaults to \$upstream..HEAD
 EOF
     exit "$exit_code"
 }
@@ -26,9 +28,10 @@ if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
     usage 0
 fi
 
-[ $# == 2 ] || usage
+[ $#  == 0 ] && usage
+[ $# -gt 2 ] && usage
 
 sed="$1"
-revrange="$2"
+revrange="${2:-`ggup`..HEAD}"
 
 git filter-branch -f --msg-filter "sed '$sed'" "$revrange"
