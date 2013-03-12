@@ -1,0 +1,3 @@
+#!/bin/bash
+
+git merged -o "$@" | awk '{ print $1 }' | xargs -r git branch -d
