@@ -1,0 +1,127 @@
+#!/bin/bash
+#
+# Show which branches are merged into upstream or the given commit-ish
+# (N.B. depends on `git-root` and `git-upstream`)
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me [options] [UPSTREAM-BRANCH]
+Options:
+  -o, --orphans  Only show branches which are not in any remotes
+  -h, --help     Show this help and exit
+EOF
+    exit "$exit_code"
+}
+
+parse_opts () {
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -o|--orphans)
+                orphans=y
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+        shift
+    done
+
+    if [ $# -gt 1 ]; then
+        usage
+    fi
+
+    args="$@"
+}
+
+find_remotes_with_branch () {
+    remotes=()
+    cd $root/.git/refs/remotes/
+    for remote in *; do
+        [[ -e "$remote/$1" ]] && remotes+=( "$remote" )
+    done
+}
+
+get_behind_ahead () {
+    # http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
+    set -- `git rev-list --count --left-right $upstream...$branch`
+    behind="$1"
+    ahead="$2"
+}
+
+analyse_branch () {
+    get_behind_ahead "$upstream" "$branch"
+
+    find_remotes_with_branch "$branch"
+
+    if [[ $orphans ]]; then
+        if ! [[ $remotes ]]; then
+            echo -e "\e[0;1m$branch\e[0m is behind \e[1;34m$behind\e[0m"
+        fi
+        return 0
+    fi
+
+    echo -ne "\e[0;1m$branch\e[0m is behind \e[1;34m$behind\e[0m"
+    if [[ $remotes ]]; then
+        echo -e ", also in:"
+        if [[ "${#remotes[@]}" = 1 ]]; then
+            echo -ne "\e[33m"
+        else
+            echo -ne "\e[32m"
+        fi
+        for remote in "${remotes[@]}"; do
+            if [[ -e "$remote/$1" ]]; then
+                echo "${remote##*/}"
+            fi
+        done | 
+        column -c $(( COLUMNS - 4 )) |
+        sed 's/^/    /'
+        echo -ne "\e[0m"
+    else
+        echo -e " and \e[1;31mnot in any remotes\e[0m"
+    fi
+}
+
+main () {
+    root=`git root`
+    upstream="$1"
+    if ! [[ $upstream ]]; then
+        upstream=`git upstream` || exit 1
+        [[ $orphans ]] || echo -e "Branches merged into \e[1;35m$upstream\e[0m:\n"
+    fi
+
+    git branch --no-color --merged "$upstream" | cut -c3- | 
+    while read branch; do
+        analyse_branch "$branch"
+    done
+}
+
+color () {
+    if [[ -t 1 ]]; then
+        cat
+    else
+        esc=`echo -e '\e'`
+        sed "s/${esc}\[[0-9;]\+m//g"
+    fi
+}
+
+parse_opts "$@"
+main "$args" | color
