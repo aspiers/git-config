@@ -69,6 +69,10 @@ get_behind_ahead () {
 
 analyse_branch () {
     get_behind_ahead "$upstream" "$branch"
+    if [[ "$ahead" != 0 ]]; then
+        echo >&2 "BUG: $branch from 'git branch --merged' was ahead by $ahead commits?!"
+        exit 1
+    fi
 
     find_remotes_with_branch "$branch"
 
