@@ -1,3 +1,6 @@
 #!/bin/bash
 
+export GIT_PAGER_MODE=diff
+. $ZDOTDIR/.shared_rc.d/git-pager
+
 exec git diff "$@"
