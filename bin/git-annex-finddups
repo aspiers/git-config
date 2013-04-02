@@ -94,7 +94,7 @@ sub get_bytes_formatter {
 
     eval { require Number::Bytes::Human; };
     if (! $@) {
-        Number::Bytes::Human->import qw(format_bytes);
+        Number::Bytes::Human->import('format_bytes');
         return sub { format_bytes(shift) };
     }
 
