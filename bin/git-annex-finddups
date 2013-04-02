@@ -88,14 +88,12 @@ sub show_dups {
 sub get_bytes_formatter {
     eval { require Format::Human::Bytes; };
     if (! $@) {
-        Format::Human::Bytes->import;
         return sub { Format::Human::Bytes::base10(shift) };
     }
 
     eval { require Number::Bytes::Human; };
     if (! $@) {
-        Number::Bytes::Human->import qw(format_bytes);
-        return sub { format_bytes(shift) };
+        return sub { Number::Bytes::Human::format_bytes(shift) };
     }
 
     return sub { $_[0] . " bytes" };
