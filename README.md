@@ -15,6 +15,7 @@ Contents include:
 * [`git-compare-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-compare-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-upstream`, and hence also on `git-root` and and `git-prefix`)
 * [`git-wip`](https://github.com/aspiers/git-config/blob/master/bin/git-wip) - returns true if the current repo has any work in progress, i.e. commits out of sync with upstream, or unmodified/untracked files
 * [`git-rm-merged-orphan-branches`](https://github.com/aspiers/git-config/blob/master/bin/git-rm-merged-orphan-branches) - remove local branches which have been merged and are not in any other remote.  Use with care!!
+* [`git-icing`](https://github.com/aspiers/git-config/blob/master/bin/git-icing) - a tasty wrapper around `git cherry` which adds a splash of colour, and blacklisting of commits which should never be upstreamed.
 
 ### History rewriting
 

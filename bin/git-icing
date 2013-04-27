@@ -1,0 +1,122 @@
+#!/usr/bin/ruby
+#
+# Some extra icing on top of git cherry's tasty cake ...
+#
+#   - Allow blacklisting of commits which should never be upstreamed,
+#     via the git-notes(1) mechanism.  To blacklist a commit from being
+#     upstreamed to any branch:
+#
+#         git notes --ref=upstreaming add -m'skip: all' $sha
+#
+#     or to blacklist from being upstreamed to specific branches (currently
+#     only works when the upstream branch is explicitly provided):
+#
+#         git notes --ref=upstreaming add    -m'skip: upstream-branch' $sha
+#         git notes --ref=upstreaming append -m'skip: another-branch'  $sha
+#         git notes --ref=upstreaming append -m'skip: /branch-regexp/' $sha
+#
+#     It is strongly recommended that you also include justification for
+#     why this commit should not be upstreamed.  You can place free-form
+#     text in the note, as long as the 'skip: ' line is preserved, with
+#     no indentation.  To edit the note:
+#
+#         git notes --ref=upstreaming edit $sha
+#
+#     To remove from the blacklist:
+#
+#         git notes --ref=upstreaming remove $sha
+#
+#   - colour-code commits:
+#
+#      - green means already upstream
+#      - red means not yet upstream
+#      - grey means should not be pushed to this upstream
+
+require 'optparse'
+require 'open3'
+require 'shellwords'
+
+# This would make the code nicer, but let's minimise dependencies instead ...
+# require 'term/ansicolor'
+# include Term::ANSIColor
+
+@@verbosity = 0
+
+def output(level, msg)
+  puts msg if level <= @@verbosity
+end
+
+def upstreaming_note(sha)
+  cmd = [ 'git', 'notes', '--ref=upstreaming', 'show', sha ]
+  out = nil
+  Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
+    out = stdout.readlines().join('')
+    err = stderr.readlines().join('')
+    status = wait_thread.value
+    return nil if err =~ /No note found for object/
+    unless status.success?
+      raise cmd.shelljoin + " exited with status #{status.exitstatus}: #{err}"
+    end
+    unless err.empty?
+      raise cmd.shelljoin + " outputted to STDERR: #{err}"
+    end
+  end
+  out
+end
+
+def blacklisted(sha, upstream_branch)
+  note = upstreaming_note(sha)
+  return false unless note
+  skippers = note.split("\n").grep(/^skip: (.+?)\s*$/m) { |x| $1 }
+  for skipper in skippers
+    return true if skipper == 'all'
+    if upstream_branch
+      skipper = Regexp.new($1) if skipper =~ %r{^/(.+)/$}
+      return true if skipper === upstream_branch
+    end
+  end
+  false
+end
+
+def parse_options
+  OptionParser.new do |opts|
+    opts.banner = "usage: git cherry-icing [options] [git cherry args]\n\n"
+    opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
+      @@verbosity = verbosity || 1
+    end
+  end.parse!
+end
+
+def cherry
+  IO.popen(["git", "cherry", "-v"] + ARGV) do |out|
+    out.each_line do |line|
+      line.chomp!
+      case line
+      when /^- ([0-9a-f]{32})/
+        # An equivalent change with the same patch-id is already upstream
+        output 2, "\033[32m#{line}\033[0m"
+      when /^\+ ([0-9a-f]{32})/
+        # Not upstream yet
+        sha = $1
+        if blacklisted(sha, ARGV[0])
+          # We never want to upstream this
+          output 1, "\033[1;30m#{line}\033[0m"
+        else
+          output 0, "\033[31m#{line}\033[0m"
+        end
+      else
+        # Unrecognised output; leave alone
+        puts line
+      end
+    end
+  end
+
+  exit $?.exitstatus
+end
+
+def main
+  parse_options
+  cherry
+end
+
+main
