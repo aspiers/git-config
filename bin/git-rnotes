@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Wrapper around 'git notes' to make it easier to share notes to and
+# from remote repositories.
 
 safe_git () {
     echo "git $*"
