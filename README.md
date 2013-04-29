@@ -16,6 +16,7 @@ Contents include:
 * [`git-wip`](https://github.com/aspiers/git-config/blob/master/bin/git-wip) - returns true if the current repo has any work in progress, i.e. commits out of sync with upstream, or unmodified/untracked files
 * [`git-rm-merged-orphan-branches`](https://github.com/aspiers/git-config/blob/master/bin/git-rm-merged-orphan-branches) - remove local branches which have been merged and are not in any other remote.  Use with care!!
 * [`git-icing`](https://github.com/aspiers/git-config/blob/master/bin/git-icing) - a tasty wrapper around `git cherry` which adds a splash of colour, and blacklisting of commits which should never be upstreamed.
+* [`git-rnotes`](https://github.com/aspiers/git-config/blob/master/bin/git-rnotes) - a wrapper around `git notes` which makes it easier to share notes to and from remote repositories
 
 ### History rewriting
 
