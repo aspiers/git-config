@@ -26,6 +26,10 @@
 #
 #         git notes --ref=upstreaming remove $sha
 #
+#     To push / pull the blacklist notes between git repositories, see:
+#
+#         http://stackoverflow.com/questions/12055303/merging-git-notes-when-there-are-merge-conflicts-in-them/
+#
 #   - colour-code commits:
 #
 #      - green means already upstream
