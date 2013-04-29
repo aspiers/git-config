@@ -1,0 +1,101 @@
+#!/bin/bash
+
+safe_git () {
+    echo "git $*"
+    if ! git "$@"; then
+        exit 1
+    fi
+}
+
+fetch () {
+    if ! git rev-parse "$local_notes" >/dev/null 2>&1; then
+        # First-time fetch of remote notes
+        safe_git fetch $remote $local_notes:$local_notes
+    fi
+
+    # This one serves like the remote tracking branch, except that we
+    # have to handle the tracking ourselves.
+    safe_git fetch $remote $local_notes:$remote_notes
+}
+
+push () {
+    safe_git push $remote $local_notes:$local_notes
+    fetch
+}
+
+# This should be only done manually by people who really know
+# what they're doing.
+#
+# push_f () {
+#     safe_git push -f $remote $local_notes:$local_notes
+# }
+
+merge () {
+    safe_git notes merge -v $remote_notes
+}
+
+pull () {
+    fetch && merge
+}
+
+me=`basename $0`
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me [options] SUBCOMMAND REMOTE
+Options:
+  -h, --help     Show this help and exit
+
+Subcommands:
+
+  fetch
+  push
+  merge
+  pull
+
+EOF
+    exit "$exit_code"
+}
+
+parse_args () {
+    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+        usage 0
+    fi
+
+    [ $# = 2 ] || usage
+
+    subcommand="$1" remote="$2"
+
+    notes_namespace=$( git notes get-ref )
+    notes_namespace="${notes_namespace#refs/}"
+    notes_namespace="${notes_namespace#notes/}"
+
+    local_notes="refs/notes/$notes_namespace"
+    remote_notes="refs/notes/$remote/$notes_namespace"
+}
+
+main () {
+    parse_args "$@"
+    
+    case "$subcommand" in
+        fetch|push|pull|merge)
+            "$subcommand"
+            ;;
+        *)
+            usage
+            ;;
+    esac
+}
+
+main "$@"
