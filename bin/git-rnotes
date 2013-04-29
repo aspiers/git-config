@@ -78,6 +78,10 @@ parse_args () {
     subcommand="$1" remote="$2"
 
     notes_namespace=$( git notes get-ref )
+    if [[ $notes_namespace != refs/notes/* ]]; then
+        echo >&2 "ERROR: Notes namespace '$notes_namespace' wasn't prefixed with 'refs/notes/'; aborting"
+        exit 1
+    fi
     notes_namespace="${notes_namespace#refs/}"
     notes_namespace="${notes_namespace#notes/}"
 
