@@ -44,10 +44,10 @@ require 'shellwords'
 # require 'term/ansicolor'
 # include Term::ANSIColor
 
-@@verbosity = 0
+$verbosity = 0
 
 def output(level, msg)
-  puts msg if level <= @@verbosity
+  puts msg if level <= $verbosity
 end
 
 def upstreaming_note(sha)
@@ -86,7 +86,7 @@ def parse_options
   OptionParser.new do |opts|
     opts.banner = "usage: git cherry-icing [options] [git cherry args]\n\n"
     opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
-      @@verbosity = verbosity || 1
+      $verbosity = verbosity || 1
     end
   end.parse!
 end
