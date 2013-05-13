@@ -104,6 +104,7 @@ def cherry
         sha = $1
         if blacklisted(sha, ARGV[0])
           # We never want to upstream this
+          line[0] = '.'
           output 1, "\033[1;30m#{line}\033[0m"
         else
           output 0, "\033[31m#{line}\033[0m"
