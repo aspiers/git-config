@@ -31,14 +31,15 @@ case "$GIT_PAGER_MODE" in
         ;;
     none)
         unset git_pager_regexp
+        GIT_PAGER=""
         ;;
     *)
         echo "ERROR: unrecognised value for GIT_PAGER_MODE [$GIT_PAGER_MODE]" >&2
         ;;
 esac
 
-[ -n "$git_pager_regexp"   ] && GIT_PAGER="$GIT_PAGER +/'$git_pager_regexp'"
+[ -n "$git_pager_regexp" ] && GIT_PAGER="$GIT_PAGER +/'$git_pager_regexp'"
 
 if which diff-highlight >/dev/null 2>&1; then
-    [ -n "$git_diff_highlight" ] && GIT_PAGER="diff-highlight | $GIT_PAGER"
+    [ -n "$git_diff_highlight" ] && [ -n "$GIT_PAGER" ] && GIT_PAGER="diff-highlight | $GIT_PAGER"
 fi
