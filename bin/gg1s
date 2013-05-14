@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Wrapper around any command (or wrapper) which appends "^!" to the
+# last argument.  This is useful when you have a list of SHA1 digests
+# and you want to feed each one to a git log command and only get
+# output for that commit.  In some cases this is better than simply
+# using "-1", since it lets you eliminate output from commits which
+# don't affect a certain file, e.g.
+#
+#     git log -1 $sha -- $path
+#
+# will always output something, even if $sha doesn't touch $path,
+# whereas
+#
+#     gg1s git log $sha -- $path
+#
+# won't.  So you can do stuff like
+#
+#     git cherry ... | awk '{print $2}' | xargs -i gg1s git log {} -- $path
+#
+# to see all commits touching $path which haven't been upstreamed yet.
+#
+# Having said that, you can simply do
+#
+#     git cherry ... | awk '{print $2}' | xargs -i git log {}^! -- $path
+#
+# so maybe this wrapper is pointless.  Hmm.  I'll keep it for now,
+# just in case I come up with another use.
+
+export GIT_PAGER_MODE=none
+
+sha="${@: -1}"
+end=$(($# - 1))
+
+exec "${@:1:end}" "${sha}^!"
