@@ -16,6 +16,11 @@ case "$version" in
 esac
 
 LESS="$LESS -S"
+
+: ${GIT_PAGER_MODE:=none}
+export GIT_PAGER_MODE
+. $ZDOTDIR/.shared_rc.d/git-pager
+
 exec git log --graph --color --decorate --abbrev-commit --date=relative \
-    --pretty=format:"%Cred%h%Creset -$dec %s %Cgreen(%cr)%Creset" \
+    --pretty=tformat:"%Cred%h%Creset -$dec %s %Cgreen(%cr)%Creset" \
     "$@"
