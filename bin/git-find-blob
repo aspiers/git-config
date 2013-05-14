@@ -54,7 +54,7 @@ chomp(my $obj_name = <$rev_parse> || '');
 die "git rev-parse --verify $blob_arg failed\n"
     unless close($rev_parse);
 die "git rev-parse returned unexpected output: $obj_name\n"
-    unless $obj_name !~ /^[0-9a-f]{40}$/;
+    unless $obj_name =~ /^[0-9a-f]{40}$/;
 
 print "(full blob is $obj_name)\n" if $obj_name ne $blob_arg;
 
