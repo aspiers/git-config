@@ -46,8 +46,11 @@ require 'shellwords'
 
 $verbosity = 0
 
-def output(level, msg)
-  puts msg if level <= $verbosity
+def output(level, colour, msg)
+  if level <= $verbosity
+    msg = "\033[#{colour}m#{msg}\033[0m" if colour && STDOUT.tty?
+    puts msg
+  end
 end
 
 def upstreaming_note(sha)
@@ -98,16 +101,16 @@ def cherry
       case line
       when /^- ([0-9a-f]{32})/
         # An equivalent change with the same patch-id is already upstream
-        output 2, "\033[32m#{line}\033[0m"
+        output 2, "32", line
       when /^\+ ([0-9a-f]{32})/
         # Not upstream yet
         sha = $1
         if blacklisted(sha, ARGV[0])
           # We never want to upstream this
           line[0] = '.'
-          output 1, "\033[1;30m#{line}\033[0m"
+          output 1, "1;30", line
         else
-          output 0, "\033[31m#{line}\033[0m"
+          output 0, "31", line
         end
       else
         # Unrecognised output; leave alone
