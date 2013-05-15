@@ -1,0 +1,234 @@
+#!/bin/bash
+#
+# Interactive wrapper around git-icing and git notes which makes
+# it easy to cherry-pick and/or blacklist non-upstreamed commits.
+#
+# Use git-rnotes to push/pull the upstreaming blacklist to/from
+# other repositories:
+#
+#   http://article.gmane.org/gmane.comp.cloud.crowbar/386
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    me=`basename $0`
+
+    cat <<EOF >&2
+Usage: $me COMMAND [ARGS]
+
+COMMAND is typically "git icing -v2" or "git cherry" but can be
+anything which gives output in the same format, e.g.
+
+    git icing -v2 \$upstream \$downstream | grep ... > tmpfile
+    # Could edit tmpfile here if we want
+    $me cat tmpfile
+
+Provides an interactive wrapper around git-icing (or git cherry).  For
+each commit provided on STDIN by COMMAND which has not yet been
+upstreamed, asks the user whether they want to cherry-pick the commit,
+blacklist it, or skip it.  After a successful cherry-pick, the source
+commit will be automatically blacklisted if the patch-id changed.
+
+Invoking icing with "-v2" ensures that previously blacklisted /
+upstreamed commits are also processed.
+EOF
+    exit "$exit_code"
+}
+
+main () {
+    parse_opts "$@"
+
+    : ${GIT_NOTES_REF:=refs/notes/upstreaming}
+    export GIT_NOTES_REF
+
+    exec 3>&0 # save STDIN tty
+
+    "$@" | while read mode sha1 rest; do
+        head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+
+        abbrev_sha1
+
+        mode_should_skip && continue
+
+        sleep 1
+        safe_run git show --notes "$sha1"
+        echo
+
+        cherry_menu
+
+        if [ -z "$skip" ]; then
+            echo
+            do_cherry_pick
+            sleep 1
+        fi
+
+        divider
+    done
+}
+
+parse_opts () {
+    verbosity=2
+
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ $# = 0 ]; then
+        usage
+    fi
+}
+
+blacklist_if_new_patch_id () {
+    old_patch_id=$( safe_run git show "$sha1" | git patch-id | awk '{print $1}' ) \
+        || fatal "Failed to retrieve patch-id for $abbrev_sha1"
+    new_patch_id=$( safe_run git show HEAD    | git patch-id | awk '{print $1}' ) \
+        || fatal "Failed to retrieve patch-id for HEAD"
+    if [ "$old_patch_id" != "$new_patch_id" ]; then
+        echo -e "\e[1;33mPatch ID changed"
+        safe_run git notes add -m'skip: all
+
+patch-id changed by cherry-picking.' "$sha1"
+        echo -e "\e[1;35mBlacklisted $abbrev_sha1"
+    fi
+}
+
+abbrev_sha1 () {
+    if [ "${#sha1}" = 40 ]; then
+        abbrev_sha1="${sha1:0:10}"
+    else
+        abbrev_sha1="${sha1}"
+    fi
+}
+
+mode_should_skip () {
+    case "$mode" in
+        -)
+            echo -e "\e[1;32mAlready upstream: $abbrev_sha1 - $rest\e[0m"
+            return 0
+            ;;
+        .)
+            echo -e "\e[1;35mBlacklisted: $abbrev_sha1 - $rest\e[0m"
+
+            [ -z "$REDO_UPSTREAMING" ] && continue
+            if safe_run git notes show "$sha1" | grep -iq 'patch[ -]id'; then
+                echo "\$REDO_UPSTREAMING set and $abbrev_sha1 probably blacklisted only due to patch-id change:"
+                echo
+            else
+                return 0
+            fi
+            ;;
+        +)
+            ;;
+        *)
+            fatal "Unrecognised mode '$mode' from '$ARGV'; aborting."
+            ;;
+    esac
+
+    return 1
+}
+
+do_cherry_pick () {
+    if ! git cherry-pick -x "$sha1"; then
+        echo "Spawning a shell so you can fix; exit the shell when done."
+        "${SHELL:-/bin/sh}" <&3
+    fi
+
+    if [[ $(git status --porcelain) ]]; then
+        fatal "Working tree is still not clean; aborting."
+    fi
+
+    new_head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+    if [ "$new_head" = "$head" ]; then
+        echo "HEAD did not change."
+    else
+        blacklist_if_new_patch_id
+    fi
+}
+
+has_note () {
+    git notes show "$1" >/dev/null 2>&1
+}
+
+cherry_menu () {
+    skip=
+    while true; do
+        echo -n "Cherry-pick / blacklist / skip $abbrev_sha1, or quit [c/b/s/q]? "
+        read answer <&3
+        case "$answer" in
+            c)
+                break
+                ;;
+            b)
+                if ! has_note "$sha1"; then
+                    safe_run git notes append -m'skip: all
+
+XXX  Enter your justification for blacklisting here or
+XXX  remove the whole note to cancel blacklisting.' "$sha1"
+                fi
+                safe_run git notes edit "$sha1" <&3
+                echo
+                if has_note "$sha1"; then
+                    echo -e "\e[1;35mBlacklisted $abbrev_sha1\e[0m"
+                else
+                    echo -e "\e[1;35m$abbrev_sha1 not blacklisted\e[0m"
+                fi
+                sleep 1
+                skip=y
+                break
+                ;;
+            s)
+                echo -e "\e[1;34mSkipping $abbrev_sha1\e[0m"
+                sleep 1
+                skip=y
+                break
+                ;;
+            q)
+                exit 0
+                ;;
+            *)
+                ;;
+        esac
+    done
+}
+
+fatal () {
+    echo >&2 "\e[1;31m$*\e[0m"
+    exit 1
+}
+
+safe_run () {
+    if ! "$@"; then
+        fatal "$* failed! Aborting." >&2
+        exit 1
+    fi
+}
+
+divider () {
+    echo
+    echo "-----------------------------------------------------------------------"
+    echo
+}
+
+ARGV="$*"
+
+main "$@"
+
