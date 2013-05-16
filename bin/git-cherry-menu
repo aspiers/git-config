@@ -106,11 +106,11 @@ blacklist_if_new_patch_id () {
     new_patch_id=$( safe_run git show HEAD    | git patch-id | awk '{print $1}' ) \
         || fatal "Failed to retrieve patch-id for HEAD"
     if [ "$old_patch_id" != "$new_patch_id" ]; then
-        echo -e "\e[1;33mPatch ID changed"
+        echo -e "\e[1;33mPatch ID changed\e[0m"
         safe_run git notes add -m'skip: all
 
 patch-id changed by cherry-picking.' "$sha1"
-        echo -e "\e[1;35mBlacklisted $abbrev_sha1"
+        echo -e "\e[1;35mBlacklisted $abbrev_sha1\e[0m"
     fi
 }
 
