@@ -125,6 +125,11 @@ end
 
 def main
   parse_options
+
+  trap "PIPE" do
+    exit 1
+  end
+
   cherry
 end
 
