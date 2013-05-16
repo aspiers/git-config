@@ -38,6 +38,9 @@ upstreamed, asks the user whether they want to cherry-pick the commit,
 blacklist it, or skip it.  After a successful cherry-pick, the source
 commit will be automatically blacklisted if the patch-id changed.
 
+You can quit the process at any time and safely re-run it later - it
+will resume from where you left off.
+
 Invoking icing with "-v2" ensures that previously blacklisted /
 upstreamed commits are also processed.
 EOF
