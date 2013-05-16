@@ -200,7 +200,6 @@ XXX  remove the whole note to cancel blacklisting.' "$sha1"
                 ;;
             s)
                 echo -e "\e[1;34mSkipping $abbrev_sha1\e[0m"
-                sleep 1
                 skip=y
                 break
                 ;;
