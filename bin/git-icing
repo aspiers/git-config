@@ -54,6 +54,7 @@ def output(level, colour, msg)
 end
 
 def upstreaming_note(sha)
+  ENV['LANG'] = 'C'
   cmd = [ 'git', 'notes', '--ref=upstreaming', 'show', sha ]
   out = nil
   Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thread|
