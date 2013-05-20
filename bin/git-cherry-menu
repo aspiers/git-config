@@ -153,12 +153,19 @@ mode_should_skip () {
 
 do_cherry_pick () {
     if ! git cherry-pick -x "$sha1"; then
-        echo "Spawning a shell so you can fix; exit the shell when done."
-        "${SHELL:-/bin/sh}" <&3
-    fi
+        while true; do
+            echo
+            echo "Spawning a shell so you can fix; exit the shell when done."
+            "${SHELL:-/bin/sh}" <&3
 
-    if [[ $(git status --porcelain) ]]; then
-        fatal "Working tree is still not clean; aborting."
+            if [[ $(git status --porcelain) ]]; then
+                git status
+                echo
+                warn "Working tree is still not clean; please try again."
+            else
+                break
+            fi
+        done
     fi
 
     new_head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
@@ -221,6 +228,10 @@ XXX  remove the whole note to cancel blacklisting.' "$sha1"
                 ;;
         esac
     done
+}
+
+warn () {
+    echo >&2 -e "\e[1;33m$*\e[0m"
 }
 
 fatal () {
