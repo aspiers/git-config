@@ -62,7 +62,6 @@ main () {
 
         mode_should_skip && continue
 
-        sleep 1
         safe_run git show --notes "$sha1"
         echo
 
@@ -71,7 +70,6 @@ main () {
         if [ -z "$skip" ]; then
             echo
             do_cherry_pick
-            sleep 1
         fi
 
         divider
@@ -111,6 +109,7 @@ blacklist_if_new_patch_id () {
 
 patch-id changed by cherry-picking.' "$sha1"
         echo -e "\e[1;35mBlacklisted $abbrev_sha1\e[0m"
+        prompt_to_continue
     fi
 }
 
@@ -161,7 +160,8 @@ do_cherry_pick () {
 
     new_head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
     if [ "$new_head" = "$head" ]; then
-        echo "HEAD did not change."
+        echo "Warning: HEAD did not change; no action taken."
+        prompt_to_continue
     else
         blacklist_if_new_patch_id
     fi
@@ -169,6 +169,11 @@ do_cherry_pick () {
 
 has_note () {
     git notes show "$1" >/dev/null 2>&1
+}
+
+prompt_to_continue () {
+    echo -n "Press enter to continue ... "
+    read <&3
 }
 
 cherry_menu () {
@@ -194,12 +199,13 @@ XXX  remove the whole note to cancel blacklisting.' "$sha1"
                 else
                     echo -e "\e[1;35m$abbrev_sha1 not blacklisted\e[0m"
                 fi
-                sleep 1
+                prompt_to_continue
                 skip=y
                 break
                 ;;
             s)
                 echo -e "\e[1;34mSkipping $abbrev_sha1\e[0m"
+                sleep 1
                 skip=y
                 break
                 ;;
