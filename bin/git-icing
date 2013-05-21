@@ -95,7 +95,7 @@ def parse_options
   end.parse!
 end
 
-def cherry
+def cherry(upstream_branch)
   IO.popen(["git", "cherry", "-v"] + ARGV) do |out|
     out.each_line do |line|
       line.chomp!
@@ -106,7 +106,7 @@ def cherry
       when /^\+ ([0-9a-f]{32})/
         # Not upstream yet
         sha = $1
-        if blacklisted(sha, ARGV[0])
+        if blacklisted(sha, upstream_branch)
           # We never want to upstream this
           line[0] = '.'
           output 1, "1;30", line
@@ -125,12 +125,13 @@ end
 
 def main
   parse_options
+  upstream_branch = ARGV[0]
 
   trap "PIPE" do
     exit 1
   end
 
-  cherry
+  cherry(upstream_branch)
 end
 
 main
