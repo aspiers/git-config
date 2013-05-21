@@ -34,6 +34,12 @@ suggested options:
           want to be able to reuse the notes which were created the
           first time round.
 
+    -c cherry-menu.skip-todos=true
+          Skip commits which have notes including 'TODO'.  This allows
+          unresolved upstreaming tasks to be tracked via an external
+          issue tracker without getting in the way during repeated
+          runs of cherry-menu.
+
 COMMAND is typically "git icing -v2" or "git cherry" but can be
 anything which gives output in the same format, e.g.
 
@@ -150,14 +156,31 @@ mode_should_skip () {
                 return 0
             fi
             ;;
+        \?)
+            echo
+            echo -e "\e[1;31mUnparseable note for: $abbrev_sha1 - $rest\e[0m"
+            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            echo
+            return 1
+            ;;
+        !)
+            if [ "$(git config cherry-menu.skip-todos)" = 'true' ]; then
+                echo -e "\e[35mTODO note for: $abbrev_sha1 - $rest\e[0m"
+                return 0
+            else
+                echo
+                echo -e "\e[35mTODO note for: $abbrev_sha1 - $rest\e[0m"
+                echo
+                return 1
+            fi
+            ;;
         +)
+            return 1
             ;;
         *)
             fatal "Unrecognised mode '$mode' from '$ARGV'; aborting."
             ;;
     esac
-
-    return 1
 }
 
 do_cherry_pick () {
