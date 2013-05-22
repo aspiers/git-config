@@ -159,6 +159,7 @@ mode_should_skip () {
             echo -e "\e[1;31mUnparseable note for: $abbrev_sha1 - $rest\e[0m"
             echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
             echo
+            prompt_to_continue
             return 1
             ;;
         !)
