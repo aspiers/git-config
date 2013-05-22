@@ -139,7 +139,7 @@ abbrev_sha1 () {
 
 mode_should_skip () {
     case "$mode" in
-        -)
+        -|\#)
             echo -e "\e[1;32mAlready upstream: $abbrev_sha1 - $rest\e[0m"
             return 0
             ;;
@@ -156,7 +156,26 @@ mode_should_skip () {
             ;;
         \?)
             echo
-            echo -e "\e[1;31mUnparseable note for: $abbrev_sha1 - $rest\e[0m"
+            echo -e "\e[1;31mUnparseable note for:\e[0m"
+            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
+            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            echo
+            prompt_to_continue
+            return 1
+            ;;
+        .\?)
+            echo
+            echo -e "\e[1;31mUnexpected blacklisting note for:\e[0m"
+            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
+            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            echo
+            prompt_to_continue
+            return 1
+            ;;
+        !\?)
+            echo
+            echo -e "\e[1;31mUnexpected TODO note for:\e[0m"
+            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
             echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
             echo
             prompt_to_continue

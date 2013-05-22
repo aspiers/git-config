@@ -105,9 +105,20 @@ def cherry(upstream_branch)
         sha = $1
         note = upstreaming_note(sha)
         if note
-          line[0] = '?'
-          output 2, "36", line
+          if blacklisted(note, upstream_branch)
+            # Upstream *and* blacklisted?!  Treat as an error.
+            line[0] = '.?'
+            output 0, "1;30", line
+          elsif note =~ /\bTODO\b/
+            # Upstream *and* marked as a TODO?  Treat as an error.
+            line[0] = '!?'
+            output 1, "1;30", line
+          else
+            line[0] = '# '
+            output 2, "36", line
+          end
         else
+          line[0] = '- '
           output 2, "32", line
         end
       when /^\+ ([0-9a-f]{32})/
@@ -117,19 +128,20 @@ def cherry(upstream_branch)
         if note
           if blacklisted(note, upstream_branch)
             # We never want to upstream this
-            line[0] = '.'
+            line[0] = '. '
             output 1, "1;30", line
           elsif note =~ /\bTODO\b/
             # Not upstream but tracked on a TODO list elsewhere
-            line[0] = '!'
+            line[0] = '! '
             output 0, "35", line
           else
             # Note had unrecognised format
-            line[0] = '?'
+            line[0] = '? '
             output 1, "33", line
           end
         else
           # Not upstream and no note
+          line[0] = '+ '
           output 0, "31", line
         end
       else
