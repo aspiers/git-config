@@ -122,8 +122,6 @@ blacklist_if_new_patch_id () {
         echo -e "\e[1;33mThe git patch-id changed during cherry-picking.  This is normal when\e[0m"
         echo -e "\e[1;33mthe diff context changes or merge conflicts are resolved.\e[0m"
         safe_run git notes add -m"skip: all
-# (you can optionally change the \"all\" above to the name of the upstream branch
-# if you want to limit blacklisting to that upstream)
 
 patch-id changed by cherry-picking." "$sha1"
         echo -e "\e[1;35mBlacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming.\e[0m"
@@ -230,8 +228,8 @@ cherry_menu () {
             b)
                 if ! has_note "$sha1"; then
                     safe_run git notes append -m'skip: all
-# (you can optionally change the \"all\" above to the name of the upstream branch
-# if you want to limit blacklisting to that upstream)
+XXX  (you can optionally change the \"all\" above to the name of the upstream branch
+XXX  if you want to limit blacklisting to that upstream)
 
 XXX  Enter your justification for blacklisting here or
 XXX  remove the whole note to cancel blacklisting.' "$sha1"
