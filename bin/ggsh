@@ -20,7 +20,11 @@ case "$type" in
         export GIT_PAGER_MODE=none
         ;;
     commit)
-        export GIT_PAGER_MODE=commit
+        if [ $# -gt 1 ]; then
+            export GIT_PAGER_MODE=commit
+        else
+            export GIT_PAGER_MODE=diff
+        fi
         ;;
 esac
         
