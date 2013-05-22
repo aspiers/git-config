@@ -1,0 +1,6 @@
+#!/bin/bash
+
+esc=$'\e'
+color="(${esc}\[[0-9;]*m)?"
+
+exec ggl1 --name-status "$@" | grep -vE "^(${color}\|${color} )* *$"
