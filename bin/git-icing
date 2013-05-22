@@ -47,6 +47,7 @@ require 'shellwords'
 # include Term::ANSIColor
 
 $verbosity = 0
+$summary = false
 
 def output(level, colour, msg)
   if level <= $verbosity
@@ -92,10 +93,15 @@ def parse_options
     opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
       $verbosity = verbosity || 1
     end
+    opts.on("-s", "--summary", Integer, "Show summary") do
+      $summary = true
+    end
   end.parse!
 end
 
 def cherry(upstream_branch)
+  totals = Hash.new(0)
+
   IO.popen(["git", "cherry", "-v"] + ARGV) do |out|
     out.each_line do |line|
       line.chomp!
@@ -148,10 +154,74 @@ def cherry(upstream_branch)
         # Unrecognised output; leave alone
         puts line
       end
+      totals[line[0..1].strip] += 1
     end
   end
 
-  exit $?.exitstatus
+  exitcode = $?.exitstatus
+  exit(exitcode) unless exitcode == 0
+
+  return totals
+end
+
+def status_description(status)
+  case status
+  when '-', '#'
+    "already upstream"
+  when '.'
+    "blacklisted"
+  when '+'
+    "not yet upstream"
+  when '!'
+      "TODO"
+  when /^.\?$/
+    "issue with note"
+  else
+    raise "unrecognised status '#{status}'"
+  end
+end
+
+def needs_work?(status)
+  case status
+  when '-', '.'
+    false
+  when '+', '!', /^.\?$/
+    true
+  else
+    raise "unrecognised status '#{status}'"
+  end
+end
+
+def show_summary(totals)
+  remaining, done = totals.sort_by { |status, count| -count }.partition {|t| needs_work?(t[0])}
+  totals['done']      = done     .inject(0) { |acc, new| acc += new[1] }
+  totals['remaining'] = remaining.inject(0) { |acc, new| acc += new[1] }
+  total = totals['done'] + totals['remaining']
+  percent = totals['done'].to_f / total * 100
+
+  puts <<EOF
+Summary
+=======
+
+#{totals['done']} commits processed:
+EOF
+  done.each do |status, count|
+    puts "  %4d %2s" % [count, status_description(status)]
+  end
+
+  puts <<EOF
+
+#{totals['remaining']} commits remaining:
+EOF
+  remaining.each do |status, count|
+    puts "  %4d %2s" % [count, status_description(status)]
+  end
+  
+
+  puts <<EOF % [totals['done'], total, percent]
+
+Progress: %d / %d commits (%d%%)
+EOF
 end
 
 def main
@@ -162,7 +232,11 @@ def main
     exit 1
   end
 
-  cherry(upstream_branch)
+  totals = cherry(upstream_branch)
+  if $summary
+    puts
+    show_summary(totals)
+  end
 end
 
 main
