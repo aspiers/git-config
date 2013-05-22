@@ -171,7 +171,7 @@ mode_should_skip () {
             ;;
         .\?)
             echo
-            colour "1;31" "Unexpected blacklisting note for:"
+            colour "1;31" "Unexpected blacklisting note for upstreamed commit:"
             colour "1;31" "    $abbrev_sha1 - $rest"
             colour "1;31" "Please edit via the 'b' option."
             echo
@@ -180,7 +180,7 @@ mode_should_skip () {
             ;;
         !\?)
             echo
-            colour "1;31" "Unexpected TODO note for:"
+            colour "1;31" "Unexpected TODO note for upstreamed commit:"
             colour "1;31" "    $abbrev_sha1 - $rest"
             colour "1;31" "Please edit via the 'b' option."
             echo
