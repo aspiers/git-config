@@ -113,18 +113,24 @@ parse_opts () {
     fi
 }
 
+colour () {
+    colour="$1"
+    shift
+    echo -e "\e[${colour}m$*\e[0m"
+}
+
 blacklist_if_new_patch_id () {
     old_patch_id=$( safe_run git show "$sha1" | git patch-id | awk '{print $1}' ) \
         || fatal "Failed to retrieve patch-id for $abbrev_sha1"
     new_patch_id=$( safe_run git show HEAD    | git patch-id | awk '{print $1}' ) \
         || fatal "Failed to retrieve patch-id for HEAD"
     if [ "$old_patch_id" != "$new_patch_id" ]; then
-        echo -e "\e[1;33mThe git patch-id changed during cherry-picking.  This is normal when\e[0m"
-        echo -e "\e[1;33mthe diff context changes or merge conflicts are resolved.\e[0m"
+        colour "1;33" "The git patch-id changed during cherry-picking.  This is normal when"
+        colour "1;33" "the diff context changes or merge conflicts are resolved."
         safe_run git notes add -m"skip: all
 
 patch-id changed by cherry-picking." "$sha1"
-        echo -e "\e[1;35mBlacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming.\e[0m"
+        colour "1;35" "Blacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming."
         prompt_to_continue
     fi
 }
@@ -140,15 +146,15 @@ abbrev_sha1 () {
 mode_should_skip () {
     case "$mode" in
         -|\#)
-            echo -e "\e[1;32mAlready upstream: $abbrev_sha1 - $rest\e[0m"
+            colour "1;32" "Already upstream: $abbrev_sha1 - $rest"
             return 0
             ;;
         .)
-            echo -e "\e[1;35mBlacklisted: $abbrev_sha1 - $rest\e[0m"
+            colour "1;35" "Blacklisted: $abbrev_sha1 - $rest"
 
             [ "$(git config cherry-menu.redo-upstreamed)" != 'true' ] && continue
             if safe_run git notes show "$sha1" | grep -iq 'patch[ -]id'; then
-                echo -e "\e[1;34mcherry-menu.redo-upstreamed is set, so redoing $abbrev_sha1 which is probably blacklisted only due to patch-id change:\e[0m"
+                colour "1;34" "cherry-menu.redo-upstreamed is set, so redoing $abbrev_sha1 which is probably blacklisted only due to patch-id change:"
                 echo
             else
                 return 0
@@ -156,38 +162,38 @@ mode_should_skip () {
             ;;
         \?)
             echo
-            echo -e "\e[1;31mUnparseable note for:\e[0m"
-            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
-            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            colour "1;31" "Unparseable note for:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
             echo
             prompt_to_continue
             return 1
             ;;
         .\?)
             echo
-            echo -e "\e[1;31mUnexpected blacklisting note for:\e[0m"
-            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
-            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            colour "1;31" "Unexpected blacklisting note for:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
             echo
             prompt_to_continue
             return 1
             ;;
         !\?)
             echo
-            echo -e "\e[1;31mUnexpected TODO note for:\e[0m"
-            echo -e "\e[1;31m    $abbrev_sha1 - $rest\e[0m"
-            echo -e "\e[1;31mPlease edit via the 'b' option.\e[0m"
+            colour "1;31" "Unexpected TODO note for:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
             echo
             prompt_to_continue
             return 1
             ;;
         !)
             if [ "$(git config cherry-menu.skip-todos)" = 'true' ]; then
-                echo -e "\e[35mTODO note for: $abbrev_sha1 - $rest\e[0m"
+                colour "35" "TODO note for: $abbrev_sha1 - $rest"
                 return 0
             else
                 echo
-                echo -e "\e[35mTODO note for: $abbrev_sha1 - $rest\e[0m"
+                colour "35" "TODO note for: $abbrev_sha1 - $rest"
                 echo
                 return 1
             fi
@@ -257,16 +263,16 @@ XXX  remove the whole note to cancel blacklisting.' "$sha1"
                 safe_run git notes edit "$sha1" <&3
                 echo
                 if has_note "$sha1"; then
-                    echo -e "\e[1;35mBlacklisted $abbrev_sha1\e[0m"
+                    colour "1;35" "Blacklisted $abbrev_sha1"
                 else
-                    echo -e "\e[1;35m$abbrev_sha1 not blacklisted\e[0m"
+                    colour "1;35" "$abbrev_sha1 not blacklisted"
                 fi
                 prompt_to_continue
                 skip=y
                 break
                 ;;
             s)
-                echo -e "\e[1;34mSkipping $abbrev_sha1\e[0m"
+                colour "1;34" "Skipping $abbrev_sha1"
                 sleep 1
                 skip=y
                 break
@@ -281,11 +287,11 @@ XXX  remove the whole note to cancel blacklisting.' "$sha1"
 }
 
 warn () {
-    echo >&2 -e "\e[1;33m$*\e[0m"
+    colour "1;33" "$*" >&2
 }
 
 fatal () {
-    echo >&2 -e "\e[1;31m$*\e[0m"
+    colour "1;31" "$*" >&2
     exit 1
 }
 
