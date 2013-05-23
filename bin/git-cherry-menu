@@ -208,7 +208,7 @@ mode_should_skip () {
 }
 
 do_cherry_pick () {
-    if ! git cherry-pick -x "$sha1"; then
+    if ! git cherry-pick -x -s "$sha1"; then
         while true; do
             echo
             echo "Spawning a shell so you can fix; exit the shell when done."
