@@ -49,3 +49,4 @@ autom4te.cache
 _service:*
 .kdirstat.cache.gz
 .*.mscz,
+build-tmp/
