@@ -81,9 +81,19 @@ fi
 
 # HTTP is supposedly less efficient than git://
 
-git url-rewrite    github: git://github.com/aspiers/
-#git url-rewrite    github: https://github.com/aspiers/
-git url-rewrite -p github: git@github.com:aspiers/
+github_ro_url=git://github.com/aspiers/
+#github_ro_url=https://github.com/aspiers/
+github_rw_url=git@github.com:aspiers/
+
+git url-rewrite    github:   $github_ro_url
+git url-rewrite -p github:   $github_rw_url
+
+# read-only URL doesn't work with private repositories
+# so provide a different alias to make sure fetch works
+git url-rewrite    githubrw: $github_rw_url
+
+# not sure if I'll ever need this
+git url-rewrite    githubro: $github_ro_url
 
 git url-rewrite    gitorious: git://gitorious.org/~aspiers/
 #git url-rewrite    gitorious: https://git.gitorious.org/~aspiers/
