@@ -92,9 +92,6 @@ git url-rewrite -p github:   $github_rw_url
 # so provide a different alias to make sure fetch works
 git url-rewrite    githubrw: $github_rw_url
 
-# not sure if I'll ever need this
-git url-rewrite    githubro: $github_ro_url
-
 git url-rewrite    gitorious: git://gitorious.org/~aspiers/
 #git url-rewrite    gitorious: https://git.gitorious.org/~aspiers/
 git url-rewrite -p gitorious: git@gitorious.org:~aspiers/
