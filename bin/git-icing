@@ -30,13 +30,9 @@
 #
 #         http://stackoverflow.com/questions/12055303/merging-git-notes-when-there-are-merge-conflicts-in-them/
 #
-#   - colour-code commits:
-#
-#      - green  means already upstream
-#      - red    means not yet upstream
-#      - grey   means should not be pushed to this upstream
-#      - yellow means not yet upstream and has unparseable note
-#      - blue   means         upstream and has unparseable note
+#   - Categorise and colour-code commits.  The first field of each
+#     line output by `git cherry' is extended to show more than just
+#     `+' and `-'.  Run `git icing --help' to show all possibilities.
 
 require 'optparse'
 require 'open3'
@@ -46,12 +42,31 @@ require 'shellwords'
 # require 'term/ansicolor'
 # include Term::ANSIColor
 
+CATEGORIES = [
+  [ '-',    '32', 'already upstream'                                     ],
+  [ '+',    '31', 'not yet upstream'                                     ],
+  [ '.',  '1;30', 'blacklisted - should not be pushed to this upstream'  ],
+  [ '!',    '35', 'still needs to be upstreamed, tracked on a TODO list' ],
+  [ '#',    '36', 'already upstream with an annotation note'             ],
+  [ '?',    '33', 'not yet upstream, with unparseable note'              ],
+  [ '.?', '1;30', 'upstream *and* blacklisted?!'                         ],
+  [ '!?', '1;30', 'upstream *and* marked as a TODO?'                     ],
+]
+
+CATEGORIES_BY_PREFIX = CATEGORIES.inject({}) { |h, new| h[new[0]] = new[1, 2]; h }
+
 $verbosity = 0
 $summary = false
 
-def output(level, colour, msg)
+def output(level, category, msg)
   if level <= $verbosity
-    msg = "\033[#{colour}m#{msg}\033[0m" if colour && STDOUT.tty?
+    msg[0] = category
+    if STDOUT.tty?
+      matched = CATEGORIES_BY_PREFIX[category]
+      abort "Couldn't understand category '#{category}'" unless matched
+      colour = matched[0]
+      msg = "\033[#{colour}m#{msg}\033[0m"
+    end
     puts msg
   end
 end
@@ -88,7 +103,7 @@ def blacklisted(note, upstream_branch)
 end
 
 def parse_options
-  OptionParser.new do |opts|
+  parser = OptionParser.new do |opts|
     opts.banner = "usage: git cherry-icing [options] [git cherry args]\n\n"
     opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
       $verbosity = verbosity || 1
@@ -96,7 +111,25 @@ def parse_options
     opts.on("-s", "--summary", Integer, "Show summary") do
       $summary = true
     end
-  end.parse!
+  end
+
+  def parser.help
+    rows = CATEGORIES.map do |field, colour, description|
+      field = "%-2s" % field
+      if STDOUT.tty?
+        "     \e[#{colour}m#{field}\e[0m     | \e[#{colour}m#{description}\e[0m"
+      else
+        "     #{field}     | #{description}"
+      end
+    end
+    super + <<EOF + rows.join("\n")
+
+first field | meaning
+------------+---------------------------------------------------------
+EOF
+  end
+
+  parser.parse!
 end
 
 def cherry(upstream_branch)
@@ -112,20 +145,18 @@ def cherry(upstream_branch)
         note = upstreaming_note(sha)
         if note
           if blacklisted(note, upstream_branch)
-            # Upstream *and* blacklisted?!  Treat as an error.
-            line[0] = '.?'
-            output 0, "1;30", line
+            # Upstream *and* blacklisted?!
+            output 0, '.?', line
           elsif note =~ /\bTODO\b/
-            # Upstream *and* marked as a TODO?  Treat as an error.
-            line[0] = '!?'
-            output 1, "1;30", line
+            # Upstream *and* marked as a TODO?!
+            output 1, '!?', line
           else
-            line[0] = '# '
-            output 2, "36", line
+            # Upstream and has an annotation note.
+            output 2, '#', line
           end
         else
-          line[0] = '- '
-          output 2, "32", line
+          # Already upstream.
+          output 2, '-', line
         end
       when /^\+ ([0-9a-f]{32})/
         # Not upstream yet
@@ -134,21 +165,17 @@ def cherry(upstream_branch)
         if note
           if blacklisted(note, upstream_branch)
             # We never want to upstream this
-            line[0] = '. '
-            output 1, "1;30", line
+            output 1, '.', line
           elsif note =~ /\bTODO\b/
             # Not upstream but tracked on a TODO list elsewhere
-            line[0] = '! '
-            output 0, "35", line
+            output 0, '!', line
           else
             # Note had unrecognised format
-            line[0] = '? '
-            output 1, "33", line
+            output 1, '?', line
           end
         else
           # Not upstream and no note
-          line[0] = '+ '
-          output 0, "31", line
+          output 0, '+', line
         end
       else
         # Unrecognised output; leave alone
@@ -165,20 +192,7 @@ def cherry(upstream_branch)
 end
 
 def status_description(status)
-  case status
-  when '-', '#'
-    "already upstream"
-  when '.'
-    "blacklisted"
-  when '+'
-    "not yet upstream"
-  when '!'
-      "TODO"
-  when /^.\?$/
-    "issue with note"
-  else
-    raise "unrecognised status '#{status}'"
-  end
+  CATEGORIES_BY_PREFIX[status][1] or raise "unrecognised status '#{status}'"
 end
 
 def needs_work?(status)
