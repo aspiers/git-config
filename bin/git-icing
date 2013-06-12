@@ -55,7 +55,7 @@ CATEGORIES = [
 
 CATEGORIES_BY_PREFIX = CATEGORIES.inject({}) { |h, new| h[new[0]] = new[1, 2]; h }
 
-$verbosity = 0
+$verbosity = 1
 $summary = false
 
 def output(level, colour, msg)
@@ -102,7 +102,7 @@ def parse_options
   parser = OptionParser.new do |opts|
     opts.banner = "usage: git cherry-icing [options] [git cherry args]\n\n"
     opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
-      $verbosity = verbosity || 1
+      $verbosity = verbosity || 2
     end
     opts.on("-s", "--summary", Integer, "Show summary") do
       $summary = true
@@ -137,17 +137,17 @@ def classify_line(upstream_branch, line)
     if note
       if blacklisted(note, upstream_branch)
         # Upstream *and* blacklisted?!
-        return 0, '.?'
+        return 1, '.?'
       elsif note =~ /\bTODO\b/
         # Upstream *and* marked as a TODO?!
-        return 1, '!?'
+        return 2, '!?'
       else
         # Upstream and has an annotation note.
-        return 2, '#'
+        return 3, '#'
       end
     else
       # Already upstream.
-      return 2, '-'
+      return 3, '-'
     end
   when /^\+ ([0-9a-f]{32})/
     # Not upstream yet
@@ -156,21 +156,21 @@ def classify_line(upstream_branch, line)
     if note
       if blacklisted(note, upstream_branch)
         # We never want to upstream this
-        return 1, '.'
+        return 2, '.'
       elsif note =~ /\bTODO\b/
         # Not upstream but tracked on a TODO list elsewhere
-        return 0, '!'
+        return 1, '!'
       else
         # Note had unrecognised format
-        return 1, '?'
+        return 2, '?'
       end
     else
       # Not upstream and no note
-      return 0, '+'
+      return 1, '+'
     end
   else
     # Unrecognised output; leave alone
-    return 0, nil
+    return 1, nil
   end
 end  
 
@@ -235,8 +235,9 @@ def show_summary(totals)
   total = totals[:done] + totals[:remaining]
   percent = totals[:done].to_f / total * 100
 
-  puts <<EOF
+  puts unless $verbosity == 0
 
+  puts <<EOF
 Summary
 =======
 
