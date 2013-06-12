@@ -134,6 +134,7 @@ end
 
 def cherry(upstream_branch)
   totals = Hash.new(0)
+  totals[:all] = 0
 
   IO.popen(["git", "cherry", "-v"] + ARGV) do |out|
     out.each_line do |line|
@@ -182,6 +183,7 @@ def cherry(upstream_branch)
         puts line
       end
       totals[line[0..1].strip] += 1
+      totals[:all] += 1
     end
   end
 
@@ -207,17 +209,24 @@ def needs_work?(status)
 end
 
 def show_summary(totals)
+  all = totals.delete(:all)
+  if all == 0
+    puts "No commits found."
+    exit 0
+  end
+
   remaining, done = totals.sort_by { |status, count| -count }.partition {|t| needs_work?(t[0])}
-  totals['done']      = done     .inject(0) { |acc, new| acc += new[1] }
-  totals['remaining'] = remaining.inject(0) { |acc, new| acc += new[1] }
-  total = totals['done'] + totals['remaining']
-  percent = totals['done'].to_f / total * 100
+  totals[:done]      = done     .inject(0) { |acc, new| acc += new[1] }
+  totals[:remaining] = remaining.inject(0) { |acc, new| acc += new[1] }
+  total = totals[:done] + totals[:remaining]
+  percent = totals[:done].to_f / total * 100
 
   puts <<EOF
+
 Summary
 =======
 
-#{totals['done']} commits processed:
+#{totals[:done]} commits processed#{done.empty? ? '' : ':'}
 EOF
   done.each do |status, count|
     puts "  %4d %2s" % [count, status_description(status)]
@@ -225,14 +234,14 @@ EOF
 
   puts <<EOF
 
-#{totals['remaining']} commits remaining:
+#{totals[:remaining]} commits remaining#{remaining.empty? ? '' : ':'}
 EOF
   remaining.each do |status, count|
     puts "  %4d %2s" % [count, status_description(status)]
   end
   
 
-  puts <<EOF % [totals['done'], total, percent]
+  puts <<EOF % [totals[:done], total, percent]
 
 Progress: %d / %d commits (%d%%)
 EOF
@@ -248,7 +257,6 @@ def main
 
   totals = cherry(upstream_branch)
   if $summary
-    puts
     show_summary(totals)
   end
 end
