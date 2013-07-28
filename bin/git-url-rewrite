@@ -26,7 +26,7 @@ EOF
 }
 
 get_rewrites () {
-    git config --global --list | \
+    git config ${config} --list | \
         perl -lne '
             if (/^url\.(.+)\.(push)?insteadOf=(.+)$/i) {
                 $abbrev  = sprintf "%-15s", $3;
@@ -40,7 +40,7 @@ get_rewrites () {
 get_rewrite () {
     abbrev="$1"
 
-    git config --global --list | \
+    git config ${config} --list | \
         perl -lne '
             if (/^url\.(.+)\.(push)?insteadOf='"$abbrev"'$/i) {
                 print(($2 ? "PUSH " : "") . $1);
@@ -51,12 +51,12 @@ get_and_clear_rewrite () {
     abbrev="$1"
     full="$2"
 
-    git config --global --list | \
+    git config ${config} --list | \
         perl -lne '
             if (/^(url\.(.+)\.'"$insteadOf"')='"$abbrev"'$/i) {
                 print $2;
                 next if $2 eq "'"$full"'";
-                system qw(git config --global --unset), $1;
+                system qw(git config '${config}' --unset), $1;
             }'
 }
 
@@ -68,12 +68,12 @@ set_rewrite () {
     existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
 
     if [ -z "$full" ]; then
-        git config --global --unset "url.$full.$insteadOf"
+        git config ${config} --unset "url.$full.$insteadOf"
         echo "Cleared ${push:+push }URL rewrite of $abbrev (was $existing_full)"
         return
     fi
 
-    git config --global "url.$full.$insteadOf" "$abbrev"
+    git config ${config} "url.$full.$insteadOf" "$abbrev"
 
     if [ -z "$existing_full" ]; then
         echo "Set ${push:+push }URL rewrite of $abbrev -> $full"
@@ -84,6 +84,13 @@ set_rewrite () {
 
 if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
     usage 0
+fi
+
+config="--global"
+if [ "$1" == '--file' ]; then
+    shift
+    config="--file $1"
+    shift
 fi
 
 insteadOf='insteadOf'
