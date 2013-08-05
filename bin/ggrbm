@@ -19,61 +19,108 @@ format:
 trunk myroot
 myroot mytopic1
 myroot mytopic2
+
+# You can use arbitrary git commands by prefixing with '!':
+!branch -f working mytopic1
+!merge --no-edit mytopic2
 EOF
     exit 1
 }
 
-if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
-    usage
-fi
+parse_opts () {
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -i)
+                interactive=-i
+                shift
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
 
-if [ "$1" == '-i' ]; then
-    interactive=-i
-    shift
-fi
+    if [ "$#" -gt 1 ]; then
+        usage
+    elif [ "$#" -eq 1 ]; then
+        conf="$1"
+        shift
+    elif [ "$#" -eq 0 ]; then
+        conf="$root/.git/topic-branches"
+    fi
 
-root="`git root`"
-if [ -z "$root" ]; then
-    echo "git root failed; aborting" >&2
+    if ! [ -e "$conf" ]; then
+        die "$conf not found; aborting."
+    fi
+
+    ARGV=( "$@" )
+}
+
+die () {
+    echo >&2 "$*"
     exit 1
-fi
+}
 
-if [ "$#" -gt 1 ]; then
-    usage
-elif [ "$#" -eq 1 ]; then
-    conf="$1"
-    shift
-elif [ "$#" -eq 0 ]; then
-    conf="$root/.git/topic-branches"
-fi
+process_line () {
+    case "${args[0]}" in
+        !*)
+            args[0]="${args[0]#!}"
+            process_arbitrary_git_command
+            ;;
+        *)
+            process_rebase_command
+            ;;
+    esac
+}
 
-if [ -e "$root/.git/rebase-apply" ]; then
-    echo "$me: rebase already in progress! aborting." >&2
-    exit 1
-fi
+process_arbitrary_git_command () {
+    echo "git ${args[*]}"
+    
+    if ! git "${args[@]}"; then
+        had_issues=y
+        echo "git ${args[*]} failed"
+        echo "Please fix and then exit shell."
+        bash <&3
+    fi
+}
 
-if ! [ -e "$conf" ]; then
-    echo "$conf not found; aborting" >&2
-    exit 1
-fi
-
-orig_head=`git head`
-
-exec 3>&0 # save STDIN tty
-egrep -v '^ *(#|$)' "$conf" | while read -a args; do
+process_rebase_command () {
     range="${args[0]}..${args[1]}"
+
+    check_whitespace
+    echo
+    rebase_until_success
+    echo
+    if [ -z "$had_issues" ]; then
+        echo -n "git rebase ${args[*]} done"
+    else
+        echo -n "git rebase ${args[*]} done; hit enter to continue ... "
+        read <&3
+    fi
+    echo
+    div
+}
+
+check_whitespace () {
     echo "Checking for whitespace errors in $range"
     if ! ggdcm "$range"; then
         echo -n "Hit enter to continue regardless ... "
         read <&3
         echo
     fi
+}
 
-    echo
+rebase_until_success () {
     echo "git rebase $interactive ${args[*]}"
-    rebase_had_issues=
+    had_issues=
     if ! git rebase $interactive "${args[@]}"; then
-        rebase_had_issues=y
+        had_issues=y
         while [ -e "$root/.git/rebase-apply" ]; do
             echo
             echo "git rebase ${args[@]} not completed."
@@ -81,20 +128,42 @@ egrep -v '^ *(#|$)' "$conf" | while read -a args; do
             bash <&3
         done
     fi
-    echo
-    if [ -z "$rebase_had_issues" ]; then
-        echo -n "git rebase ${args[*]} done"
-    else
-        echo -n "git rebase ${args[*]} done; hit enter to continue ... "
-        read <&3
-    fi
-    echo
-    echo ======================================================================
-done
+}
 
-if [ -n "$orig_head" ]; then
-    echo "Checking out original HEAD ($orig_head) ... "
-    git checkout "$orig_head"
-else
-    echo "WARNING: Couldn't determine original HEAD; current HEAD is probably different".
-fi
+restore_head () {
+    if [ -n "$orig_head" ]; then
+        echo "Checking out original HEAD ($orig_head) ... "
+        git checkout "$orig_head"
+    else
+        echo "WARNING: Couldn't determine original HEAD; current HEAD is probably different".
+    fi
+}
+
+main () {
+    root="`git root`"
+    if [ -z "$root" ]; then
+        die "git root failed; aborting."
+    fi
+
+    if ! which div >&/dev/null; then
+        die "div not found on \$PATH; please get from: https://github.com/aspiers/shell-env/blob/master/bin/div"
+    fi
+
+    parse_opts "$@"
+
+    if [ -e "$root/.git/rebase-apply" ]; then
+        die "$me: rebase already in progress! aborting."
+    fi
+
+    orig_head=`git head`
+
+    exec 3>&0 # save STDIN tty
+    egrep -v '^ *(#|$)' "$conf" | while read -a args; do
+        process_line
+    done
+
+    echo
+    restore_head
+}
+
+main "$@"
