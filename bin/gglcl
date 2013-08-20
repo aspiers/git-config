@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+# Log in ChangeLog format
+#
+# for use in OBS .changes files
+
+from="$1"
+to="$2"
+
+branch=`ggde "$to"`
+branch="${branch#remotes/*/}"
+
+echo "- update $branch to latest git revision ($to)"
+
+exec git log --no-merges --pretty=format:'  + %s' $1..$2
