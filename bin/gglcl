@@ -4,12 +4,51 @@
 #
 # for use in OBS .changes files
 
-from="$1"
-to="$2"
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
 
-branch=`ggde "$to"`
-branch="${branch#remotes/*/}"
+    me=`basename $0`
 
-echo "- update $branch to latest git revision ($to)"
+    cat <<EOF >&2
+Usage: $me [FROM [TO]]
+options
+EOF
+    exit "$exit_code"
+}
 
-exec git log --no-merges --pretty=format:'  + %s' $1..$2
+main () {
+    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+        usage 0
+    fi
+
+    [ $# -gt 2 ] && usage
+
+    from="$1"
+    to="${2:-HEAD}"
+    to_rev="`git rev-parse --short $to`"
+
+    branch=`ggde --all "$to"`
+    branch="${branch#remotes/*/} "
+
+    if [ -n "$from" ]; then
+        args="$from..$to"
+        from_rev="from `git rev-parse --short $from` "
+    else
+        args="$to"
+        from_rev=
+    fi
+
+    echo "- update ${branch}${from_rev}to latest git revision ($to_rev)"
+    exec git log --no-merges --pretty=format:'  + %s' "$args"
+}
+
+main "$@"
