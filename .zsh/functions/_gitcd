@@ -1,0 +1,3 @@
+#compdef gitcd
+
+_path_files -/ -W $(git root)
