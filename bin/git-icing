@@ -100,7 +100,7 @@ end
 
 def parse_options
   parser = OptionParser.new do |opts|
-    opts.banner = "usage: git cherry-icing [options] [git cherry args]\n\n"
+    opts.banner = "usage: git icing [options] [git cherry args]\n\n"
     opts.on("-v", "--verbosity [N]", Integer, "Set verbosity level") do |verbosity|
       $verbosity = verbosity || 2
     end
