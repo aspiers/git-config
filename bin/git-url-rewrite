@@ -16,17 +16,21 @@ usage () {
 
     cat <<EOF >&2
 Usage: 
-  $me                   Lists all rewrite rules.
-  $me ABBREV            Lists rewrite rule(s) for ABBREV
-  $me [-p] ABBREV FULL  Sets rewrite rule for ABBREV to FULL
-                                    -p uses pushInsteadOf, not insteadOf.
-                                    If FULL is empty string, clears the rule.
+  $me [<file-option>]           Lists all rewrite rules.
+  $me [<file-option>] ABBREV    Lists rewrite rule(s) for ABBREV
+  $me [<file-option>] [-p] ABBREV FULL
+                                Sets rewrite rule for ABBREV to FULL
+                                  -p uses pushInsteadOf, not insteadOf.
+                                  If FULL is empty string, clears the rule.
+
+<file-option> is as for git-config, i.e. --system, --global, --local,
+--file <filename>.
 EOF
     exit "$exit_code"
 }
 
 get_rewrites () {
-    git config --global --list | \
+    git config $config --list | \
         perl -lne '
             if (/^url\.(.+)\.(push)?insteadOf=(.+)$/i) {
                 $abbrev  = sprintf "%-15s", $3;
@@ -40,7 +44,7 @@ get_rewrites () {
 get_rewrite () {
     abbrev="$1"
 
-    git config --global --list | \
+    git config $config --list | \
         perl -lne '
             if (/^url\.(.+)\.(push)?insteadOf='"$abbrev"'$/i) {
                 print(($2 ? "PUSH " : "") . $1);
@@ -51,12 +55,12 @@ get_and_clear_rewrite () {
     abbrev="$1"
     full="$2"
 
-    git config --global --list | \
+    git config $config --list | \
         perl -lne '
             if (/^(url\.(.+)\.'"$insteadOf"')='"$abbrev"'$/i) {
                 print $2;
                 next if $2 eq "'"$full"'";
-                system qw(git config --global --unset), $1;
+                system qw(git config '"$config"' --unset), $1;
             }'
 }
 
@@ -68,12 +72,12 @@ set_rewrite () {
     existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
 
     if [ -z "$full" ]; then
-        git config --global --unset "url.$full.$insteadOf"
+        git config $config --unset "url.$full.$insteadOf"
         echo "Cleared ${push:+push }URL rewrite of $abbrev (was $existing_full)"
         return
     fi
 
-    git config --global "url.$full.$insteadOf" "$abbrev"
+    git config $config "url.$full.$insteadOf" "$abbrev"
 
     if [ -z "$existing_full" ]; then
         echo "Set ${push:+push }URL rewrite of $abbrev -> $full"
@@ -82,26 +86,57 @@ set_rewrite () {
     fi
 }
 
-if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
-    usage 0
-fi
+parse_opts () {
+    config=
 
-insteadOf='insteadOf'
-if [ "$1" == '-p' ]; then
-    push=y
-    insteadOf='pushInsteadOf'
-    shift
-    if [ $# != 2 ]; then
-        usage "-p only valid when setting"
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            --system|--global|--local)
+                config="$1"
+                shift
+                break
+                ;;
+            -f|--file)
+                config="--file $2"
+                shift 2
+                break
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    insteadOf='insteadOf'
+    if [ "$1" == '-p' ]; then
+        push=y
+        insteadOf='pushInsteadOf'
+        shift
+        if [ $# != 2 ]; then
+            usage "-p only valid when setting"
+        fi
     fi
-fi
 
-if [ $# = 0 ]; then
-    get_rewrites
-elif [ $# = 1 ]; then
-    get_rewrite "$1"
-elif [ $# = 2 ]; then
-    set_rewrite "$@"
-else
-    usage 1
-fi
+    ARGV=( "$@" )
+}
+
+main () {
+    parse_opts "$@"
+
+    set -- "${ARGV[@]}"
+
+    if [ $# = 0 ]; then
+        get_rewrites
+    elif [ $# = 1 ]; then
+        get_rewrite "$1"
+    elif [ $# = 2 ]; then
+        set_rewrite "$@"
+    else
+        usage 1
+    fi
+}
+
+main "$@"
