@@ -18,6 +18,7 @@ Contents include:
 * [`git-icing`](https://github.com/aspiers/git-config/blob/master/bin/git-icing) - a tasty wrapper around `git cherry` which adds a splash of colour, and blacklisting of commits which should never be upstreamed.
 * [`git-cherry-menu`](https://github.com/aspiers/git-config/blob/master/bin/git-cherry-menu) - an interactive wrapper around `git icing` and `git notes` which makes it easy to cherry-pick and/or blacklist non-upstreamed commits.
 * [`git-rnotes`](https://github.com/aspiers/git-config/blob/master/bin/git-rnotes) - a wrapper around `git notes` which makes it easier to share notes to and from remote repositories
+* [`git-deps`](https://github.com/aspiers/git-config/blob/master/bin/git-deps) - automatically detect dependencies between commits
 
 ### History rewriting
 
