@@ -1,0 +1,96 @@
+#!/bin/bash -e
+
+# http://stackoverflow.com/questions/2969214/git-programmatically-know-by-how-much-the-branch-is-ahead-behind-a-remote-branc
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
+
+    me=`basename $0`
+
+    cat <<EOF >&2
+Usage: $me [options] LEFT RIGHT
+
+LEFT and RIGHT are "commit-ish" references.
+
+Options:
+  -h, --help     Show this help and exit
+  -q             Quiet mode
+      --sh       Output result as shell code to be source'd
+options
+EOF
+    exit "$exit_code"
+}
+
+parse_opts () {
+    shmode=
+
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            --sh)
+                shmode=yes
+                shift
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ $# != 2 ]; then
+        usage
+    fi
+
+    left="$1"
+    right="$2"
+}
+
+main () {
+    parse_opts "$@"
+
+    set -- `git rev-list --count --left-right ${left}...${right}`
+    behind="$1"
+    ahead="$2"
+
+    if [ "$1" = '-q' ]; then
+        # quiet mode; just exit successfully iff we're in sync with upstream
+        exit $(( behind + ahead ))
+    fi
+
+    if [ -n "$shmode" ]; then
+        cat <<EOF
+behind=$behind
+ahead=$ahead
+EOF
+        exit
+    fi
+
+    if [ "$behind" = 0 -a "$ahead" = 0 ]; then
+        echo "$right is in sync with $left"
+    elif [ "$behind" != 0 -a "$ahead" != 0 ]; then
+        echo "$right is behind $left by $behind commits, and ahead by $ahead"
+    elif [ "$behind" = 0 ]; then
+        echo "$right is ahead of $left by $ahead commits"
+    elif [ "$ahead" = 0 ]; then
+        echo "$right is behind $left by $behind commits"
+    else
+        echo "BUG in $0!" >&2
+        exit 1
+    fi
+}
+
+main "$@"

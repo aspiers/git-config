@@ -4,38 +4,11 @@
 
 shmode=
 if [ "$1" = '--sh' ]; then
-    shmode=yes
+    shmode="$1"
     shift
 fi
 
 head=`git head`
 upstream=`git upstream`
-set -- `git rev-list --count --left-right $upstream...HEAD`
-behind="$1"
-ahead="$2"
 
-if [ -n "$shmode" ]; then
-    cat <<EOF
-behind=$behind
-ahead=$ahead
-EOF
-    exit
-fi
-
-if [ "$1" = '-q' ]; then
-    # quiet mode; just exit successfully iff we're in sync with upstream
-    exit $(( behind + ahead ))
-fi
-
-if [ "$behind" = 0 -a "$ahead" = 0 ]; then
-    echo "$head is in sync with $upstream"
-elif [ "$behind" != 0 -a "$ahead" != 0 ]; then
-    echo "$head is behind $upstream by $behind commits, and ahead by $ahead"
-elif [ "$behind" = 0 ]; then
-    echo "$head is ahead of $upstream by $ahead commits"
-elif [ "$ahead" = 0 ]; then
-    echo "$head is behind $upstream by $behind commits"
-else
-    echo "BUG in $0!" >&2
-    exit 1
-fi
+git compare $shmode "$upstream" "$head"
