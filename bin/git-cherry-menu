@@ -127,10 +127,20 @@ blacklist_if_new_patch_id () {
     if [ "$old_patch_id" != "$new_patch_id" ]; then
         colour "1;33" "The git patch-id changed during cherry-picking.  This is normal when"
         colour "1;33" "the diff context changes or merge conflicts are resolved."
-        safe_run git notes add -m"skip: all
+        if ! has_note "$sha1"; then
+            safe_run git notes append -m'skip: ???
+XXX  (Please change the "???" above to the name of the upstream branch
+XXX  so future runs will not attempt to duplicate the upstreaming.)
 
-patch-id changed by cherry-picking." "$sha1"
-        colour "1;35" "Blacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming."
+XXX  patch-id changed by cherry-picking.' "$sha1"
+        fi
+        safe_run git notes edit "$sha1" <&3
+        echo
+        if has_note "$sha1"; then
+            colour "1;35" "Blacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming."
+        else
+            colour "1;35" "ERROR: $abbrev_sha1 cherry-picked but not blacklisted!"
+        fi
         prompt_to_continue
     fi
 }
