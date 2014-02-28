@@ -77,7 +77,7 @@ main () {
 
         mode_should_skip && continue
 
-        safe_run git show --notes "$sha1"
+        git show --notes "$sha1"
         echo
 
         cherry_menu
