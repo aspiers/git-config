@@ -95,7 +95,7 @@ analyse_branch () {
             if [[ -e "$remote/$1" ]]; then
                 echo "${remote##*/}"
             fi
-        done | 
+        done |
         column -c $(( COLUMNS - 4 )) |
         sed 's/^/    /'
         echo -ne "\e[0m"
@@ -112,7 +112,7 @@ main () {
         [[ $orphans ]] || echo -e "Branches merged into \e[1;35m$upstream\e[0m:\n"
     fi
 
-    git branch --no-color --merged "$upstream" | cut -c3- | 
+    git branch --no-color --merged "$upstream" | cut -c3- |
     while read branch; do
         analyse_branch "$branch"
     done
