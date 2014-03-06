@@ -109,9 +109,9 @@ main () {
     upstream="$1"
     if ! [[ $upstream ]]; then
         upstream=`git upstream` || exit 1
-        [[ $orphans ]] || echo -e "Branches merged into \e[1;35m$upstream\e[0m:\n"
     fi
 
+    [[ $orphans ]] || echo -e "Branches merged into \e[1;35m$upstream\e[0m:\n"
     git branch --no-color --merged "$upstream" | cut -c3- |
     while read branch; do
         analyse_branch "$branch"
