@@ -297,7 +297,7 @@ fatal () {
 
 safe_run () {
     if ! "$@"; then
-        fatal "$* failed! Aborting." >&2
+        fatal "$* failed! Aborting."
     fi
 }
 
