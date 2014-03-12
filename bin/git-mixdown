@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# "mixdown" multiple branches into a combined working branch.
+# Useful for testing a combination of bugfixes / features at once
+# via a throw-away temporary working branch.
+
+combined_branch=working
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
+
+    me=`basename $0`
+
+    cat <<EOF >&2
+Usage: $me [options] BASE-BRANCH BRANCH2 [BRANCH3 ...]
+Options:
+  -h, --help            Show this help and exit
+  -b, --branch BRANCH   Target branch for mixdown [$combined_branch]
+
+Points the target branch at BASE-BRANCH and then mixes all the other
+branches in.  Leaves the working copy with the target branch checked out.
+EOF
+    exit "$exit_code"
+}
+
+parse_opts () {
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -b|--branch)
+                combined_branch="$2"
+                shift 2
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ $# -lt 2 ]; then
+        usage
+    fi
+
+    base="$1"
+    shift
+
+    branches=( "$@" )
+}
+
+fatal () {
+    echo "$*" >&2
+    exit 1
+}
+
+safe_run () {
+    if ! "$@"; then
+        fatal "$* failed! Aborting." >&2
+    fi
+}
+
+main () {
+    parse_opts "$@"
+
+    safe_run git branch -f "$combined_branch" "$base"
+    safe_run git checkout "$combined_branch"
+    safe_run git merge --no-edit "${branches[@]}"
+}
+
+main "$@"
