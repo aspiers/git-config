@@ -21,13 +21,16 @@ usage () {
     me=`basename $0`
 
     cat <<EOF >&2
-Usage: $me [options] BASE-BRANCH BRANCH2 [BRANCH3 ...]
+Usage: $me [options] [BASE-BRANCH BRANCH2 [BRANCH3 ...]]
 Options:
   -h, --help            Show this help and exit
   -b, --branch BRANCH   Target branch for mixdown [$combined_branch]
 
 Points the target branch at BASE-BRANCH and then mixes all the other
 branches in.  Leaves the working copy with the target branch checked out.
+
+If no arguments are given, branches are read from .git/working-branches
+instead, which should be delimited by whitespace and/or newlines.
 EOF
     exit "$exit_code"
 }
@@ -51,14 +54,26 @@ parse_opts () {
         esac
     done
 
-    if [ $# -lt 2 ]; then
+    if [ $# = 1 ]; then
         usage
     fi
 
-    base="$1"
-    shift
+    if [ $# = 0 ]; then
+        git_dir=`git rev-parse --git-dir` || exit 1
+        branch_file="$git_dir/working-branches"
+        if ! [ -e "$branch_file" ]; then
+            fatal "No arguments given but $branch_file didn't exist"
+        fi
+        branches=( $( grep -v '^ *#' "$branch_file" ) )
+        base="${branches[0]}"
+        unset branches[0]
+    else
+        base="$1"
+        shift
+        branches=( "$@" )
+    fi
 
-    branches=( "$@" )
+    echo "Will start at $base and merge: ${branches[@]}"
 }
 
 fatal () {
