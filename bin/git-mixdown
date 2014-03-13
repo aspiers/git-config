@@ -75,8 +75,7 @@ safe_run () {
 main () {
     parse_opts "$@"
 
-    safe_run git branch -f "$combined_branch" "$base"
-    safe_run git checkout "$combined_branch"
+    safe_run git checkout -B "$combined_branch" "$base"
     safe_run git merge --no-edit "${branches[@]}"
 }
 
