@@ -24,7 +24,9 @@ usage () {
 Usage: $me [options] [BASE-BRANCH BRANCH2 [BRANCH3 ...]]
 Options:
   -h, --help            Show this help and exit
-  -b, --branch BRANCH   Target branch for mixdown [$combined_branch]
+  -b, --branch BRANCH   Target branch for mixdown [default: $combined_branch]
+  -c, --checkout        Leave target branch checked out
+                        [default: restore previous checkout]
 
 Points the target branch at BASE-BRANCH and then mixes all the other
 branches in.  Leaves the working copy with the target branch checked out.
@@ -36,6 +38,8 @@ EOF
 }
 
 parse_opts () {
+    checkout=
+
     while [ $# != 0 ]; do
         case "$1" in
             -h|--help)
@@ -44,6 +48,10 @@ parse_opts () {
             -b|--branch)
                 combined_branch="$2"
                 shift 2
+                ;;
+            -c|--checkout)
+                checkout=y
+                shift
                 ;;
             -*)
                 usage "Unrecognised option: $1"
@@ -87,11 +95,24 @@ safe_run () {
     fi
 }
 
+restore_head () {
+    if [ -n "$orig_head" ]; then
+        echo "Checking out original HEAD ($orig_head) ... "
+        git checkout "$orig_head"
+    else
+        echo "WARNING: Couldn't determine original HEAD; current HEAD is probably different".
+    fi
+}
+
 main () {
     parse_opts "$@"
 
+    orig_head=`git rev-parse --abbrev-ref HEAD`
     safe_run git checkout -B "$combined_branch" "$base"
     safe_run git merge --no-edit "${branches[@]}"
+    if [ -z "$checkout" ]; then
+        restore_head
+    fi
 }
 
 main "$@"
