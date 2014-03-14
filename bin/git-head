@@ -11,8 +11,9 @@ set -o pipefail
 # solution to the formatting which could change:
 #git branch | awk '$1 == "*" { print $2 }'
 
-# And this one only works with git >= 1.6.3:
-#git rev-parse --abbrev-ref HEAD
+# This one only works with git >= 1.6.3, but that's been around
+# since Sept 2010 so it should be fine by now.
+git rev-parse --abbrev-ref HEAD
 
-# The lesser of three evils:
-git symbolic-ref HEAD | sed 's,refs/heads/,,'
+# Another option:
+#git symbolic-ref HEAD | sed 's,refs/heads/,,'
