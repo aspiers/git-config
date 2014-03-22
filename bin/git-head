@@ -13,7 +13,13 @@ set -o pipefail
 
 # This one only works with git >= 1.6.3, but that's been around
 # since Sept 2010 so it should be fine by now.
-git rev-parse --abbrev-ref HEAD
+ref=$( git rev-parse --abbrev-ref HEAD )
+if [ "$ref" = HEAD ]; then
+    # detached branch
+    git rev-parse HEAD
+else
+    echo "$ref"
+fi
 
 # Another option:
 #git symbolic-ref HEAD | sed 's,refs/heads/,,'
