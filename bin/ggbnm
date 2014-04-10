@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ "$1" == --help ]; then
+    exec git branch "$@"
+fi
+
+exec ggb --no-merged "$@"
