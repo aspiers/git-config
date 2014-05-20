@@ -1,5 +1,9 @@
 #!/bin/bash
 
-for remote in "$@"; do
-  git fetch --prune "$remote"
-done
+if [ $# = 0 ]; then
+    exec git fetch --prune
+else
+    for remote in "$@"; do
+        git fetch --prune "$remote"
+    done
+fi
