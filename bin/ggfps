@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ "$1" = '--help' ]; then
+    exec git format-patch "$@"
+fi
+
+if [ $# = 0 ]; then
+    set -- "`git upstream`..HEAD"
+fi
+
+exec git format-patch --stdout "$@"
