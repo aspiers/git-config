@@ -13,7 +13,7 @@ fi
 if [[ "$ZDOTUSER" == adam.spiers ]]; then
   git config --global user.name "Adam Spiers"
   # set user.email on a per-project basis
-  git config --global user.signingkey 7A2F2DDC
+  git config --global user.signingkey DAC1D4FA
 fi
 
 git config --global color.ui auto
