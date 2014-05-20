@@ -24,7 +24,7 @@ Usage:
                                   If FULL is empty string, clears the rule.
 
 <file-option> is as for git-config, i.e. --system, --global, --local,
---file <filename>.
+--file <filename>.  Defaults to --global.
 EOF
     exit "$exit_code"
 }
@@ -109,6 +109,12 @@ parse_opts () {
                 ;;
         esac
     done
+
+    if [ -z "$config" ]; then
+        #if ! git rev-parse --git-dir 2>/dev/null; then
+        config=--global
+        #fi
+    fi
 
     insteadOf='insteadOf'
     if [ "$1" == '-p' ]; then
