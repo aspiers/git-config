@@ -85,6 +85,7 @@ fi
 # It's possible to push over HTTPS but that requires
 # either ~/.netrc or git-credential-cache - why bother
 # when I already have ssh-agent working nicely?
+# Answer: only worth it when ssh is being blocked
 github_ro_url=git://github.com/aspiers/
 #github_ro_url=https://github.com/aspiers/
 github_rw_url=git@github.com:aspiers/
