@@ -9,13 +9,6 @@ if which zsh >&/dev/null; then
   zsh -c zrec
 fi
 
-# too lazy to make separate cfgctl module with personal config
-if [[ "$ZDOTUSER" == adam.spiers ]]; then
-  git config --global user.name "Adam Spiers"
-  # set user.email on a per-project basis
-  git config --global user.signingkey DAC1D4FA
-fi
-
 git config --global color.ui auto
 git config --global color.pager true
 git config --global color.diff auto
@@ -64,49 +57,3 @@ git config --global core.excludesfile ~/.gitignore
 
 # sed 's/^#/\\#/g' ~/.cvsignore >> ~/.gitignore
 
-. ~/lib/libhost.sh
-read_localhost_nickname
-
-for h in arctic coral; do
-    if [ "$localhost_nickname" = $h ]; then
-        git url-rewrite $h: /home/adam/
-    else
-        git url-rewrite $h: ssh://adam@$h.adamspiers.org/home/adam/
-    fi
-done
-
-if [ "$localhost_nickname" = 'coral' ]; then
-    git url-rewrite adamspiers.org: /home/adam/.srv/git/
-else
-    git url-rewrite adamspiers.org: ssh://adam@git.adamspiers.org/home/adam/.srv/git/
-fi
-
-# HTTP is supposedly less efficient than git://
-# It's possible to push over HTTPS but that requires
-# either ~/.netrc or git-credential-cache - why bother
-# when I already have ssh-agent working nicely?
-github_ro_url=git://github.com/aspiers/
-#github_ro_url=https://github.com/aspiers/
-github_rw_url=git@github.com:aspiers/
-
-git url-rewrite    github:   $github_ro_url
-git url-rewrite -p github:   $github_rw_url
-
-# read-only URL doesn't work with private repositories
-# so provide a different alias to make sure fetch works
-git url-rewrite    githubrw: $github_rw_url
-
-git url-rewrite    gitorious: git://gitorious.org/~aspiers/
-#git url-rewrite    gitorious: https://git.gitorious.org/~aspiers/
-git url-rewrite -p gitorious: git@gitorious.org:~aspiers/
-
-# These require a .git suffix
-git url-rewrite    savannah: git://git.savannah.gnu.org/
-git url-rewrite -p savannah: ssh://aspiers@git.sv.gnu.org/srv/git/
-
-git config --global sendemail.suppressfrom true
-git config --global sendemail.smtpserver `which msmtp-personal`
-git config --global sendemail.chainreplyto false
-
-# --envelope-sender=auto not needed with msmtp-personal which uses msmtp --read-envelope-from
-#git config --global sendemail.envelopesender auto
