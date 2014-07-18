@@ -1,0 +1,338 @@
+#!/bin/bash
+#
+# Blacklist a commit.
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    me=`basename $0`
+
+    cat <<EOF >&2
+usage: ${me/git-/git [<options>] } <command> [<args>...]
+suggested options:
+
+    -c cherry-menu.redo-upstreamed=true
+          Include commits which are annotated has having been
+          previously upstreamed with a different patch-id.  This can
+          be useful if you decide to hard-reset the upstream branch in
+          order to redo some cherry-picking you made a mess of, but
+          want to be able to reuse the notes which were created the
+          first time round.
+
+    -c cherry-menu.skip-todos=true
+          Skip commits which have notes including 'TODO'.  This allows
+          unresolved upstreaming tasks to be tracked via an external
+          issue tracker without getting in the way during repeated
+          runs of cherry-menu.
+
+COMMAND is typically "git icing -v2" or "git cherry" but can be
+anything which gives output in the same format, e.g.
+
+    git icing -v2 \$upstream \$downstream | grep ... > tmpfile
+    # Could edit tmpfile here if we want
+    $me cat tmpfile
+
+Provides an interactive wrapper around git-icing (or git cherry).  For
+each commit provided on STDIN by COMMAND which has not yet been
+upstreamed, asks the user whether they want to cherry-pick the commit,
+blacklist it, or skip it.  After a successful cherry-pick, the source
+commit will be automatically blacklisted if the patch-id changed.
+
+You can quit the process at any time and safely re-run it later - it
+will resume from where you left off.
+
+Invoking icing with "-v2" ensures that previously blacklisted /
+upstreamed commits are also processed.
+EOF
+    exit "$exit_code"
+}
+
+main () {
+#    parse_opts "$@"
+#
+    : ${GIT_NOTES_REF:=refs/notes/upstreaming}
+    export GIT_NOTES_REF
+#
+#    exec 3>&0 # save STDIN tty
+#
+#    "$@" | while read mode sha1 rest; do
+#        head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+#
+#        abbrev_sha1
+#
+#        mode_should_skip && continue
+#
+#        git show --notes "$sha1"
+#        echo
+#
+#        cherry_menu
+#
+#        if [ -z "$skip" ]; then
+#            echo
+#            do_cherry_pick
+#        fi
+#
+#        divider
+#    done
+
+    head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+
+    MATCH=0
+    for i in `git branch -a`; do
+        if [ "$1" == "$i" ]; then
+            MATCH=1
+            break
+        fi
+    done
+    if [ $MATCH -eq 0 ]; then
+        echo "branch $1 does not exist"
+        exit 1
+    fi
+
+    while read mode sha1 rest; do
+        if [ "$mode" = "+" ]; then
+            safe_run git notes append -m"skip: $1
+$rest" "$sha1"
+        fi
+    done
+}
+
+parse_opts () {
+    verbosity=2
+
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -*)
+                usage "Unrecognised option: $1"
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    if [ $# = 0 ]; then
+        usage
+    fi
+}
+
+colour () {
+    colour="$1"
+    shift
+    echo -e "\e[${colour}m$*\e[0m"
+}
+
+blacklist_if_new_patch_id () {
+    old_patch_id=$( safe_run git show "$sha1" | git patch-id | awk '{print $1}' ) \
+        || fatal "Failed to retrieve patch-id for $abbrev_sha1"
+    new_patch_id=$( safe_run git show HEAD    | git patch-id | awk '{print $1}' ) \
+        || fatal "Failed to retrieve patch-id for HEAD"
+    if [ "$old_patch_id" != "$new_patch_id" ]; then
+        colour "1;33" "The git patch-id changed during cherry-picking.  This is normal when"
+        colour "1;33" "the diff context changes or merge conflicts are resolved."
+        if ! has_note "$sha1"; then
+            safe_run git notes append -m'skip: ???
+XXX  (Please change the "???" above to the name of the upstream branch
+XXX  so future runs will not attempt to duplicate the upstreaming.)
+
+XXX  patch-id changed by cherry-picking.' "$sha1"
+        fi
+        safe_run git notes edit "$sha1" <&3
+        echo
+        if has_note "$sha1"; then
+            colour "1;35" "Blacklisted $abbrev_sha1 so future runs won't attempt to duplicate the upstreaming."
+        else
+            colour "1;35" "ERROR: $abbrev_sha1 cherry-picked but not blacklisted!"
+        fi
+        prompt_to_continue
+    fi
+}
+
+abbrev_sha1 () {
+    if [ "${#sha1}" = 40 ]; then
+        abbrev_sha1="${sha1:0:10}"
+    else
+        abbrev_sha1="${sha1}"
+    fi
+}
+
+mode_should_skip () {
+    case "$mode" in
+        -|\#)
+            colour "1;32" "Already upstream: $abbrev_sha1 - $rest"
+            return 0
+            ;;
+        .)
+            colour "1;35" "Blacklisted: $abbrev_sha1 - $rest"
+
+            [ "$(git config cherry-menu.redo-upstreamed)" != 'true' ] && continue
+            if safe_run git notes show "$sha1" | grep -iq 'patch[ -]id'; then
+                colour "1;34" "cherry-menu.redo-upstreamed is set, so redoing $abbrev_sha1 which is probably blacklisted only due to patch-id change:"
+                echo
+            else
+                return 0
+            fi
+            ;;
+        \?)
+            echo
+            colour "1;31" "Unparseable note for:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
+            echo
+            prompt_to_continue
+            return 1
+            ;;
+        .\?)
+            echo
+            colour "1;31" "Unexpected blacklisting note for upstreamed commit:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
+            echo
+            prompt_to_continue
+            return 1
+            ;;
+        !\?)
+            echo
+            colour "1;31" "Unexpected TODO note for upstreamed commit:"
+            colour "1;31" "    $abbrev_sha1 - $rest"
+            colour "1;31" "Please edit via the 'b' option."
+            echo
+            prompt_to_continue
+            return 1
+            ;;
+        !)
+            if [ "$(git config cherry-menu.skip-todos)" = 'true' ]; then
+                colour "35" "TODO note for: $abbrev_sha1 - $rest"
+                return 0
+            else
+                echo
+                colour "35" "TODO note for: $abbrev_sha1 - $rest"
+                echo
+                return 1
+            fi
+            ;;
+        +)
+            return 1
+            ;;
+        *)
+            fatal "Unrecognised mode '$mode' from '$ARGV'; aborting."
+            ;;
+    esac
+}
+
+do_cherry_pick () {
+    if ! git cherry-pick -x -s "$sha1"; then
+        while true; do
+            echo
+            echo "Spawning a shell so you can fix; exit the shell when done."
+            "${SHELL:-/bin/sh}" <&3
+
+            if [[ $(git status --porcelain) ]]; then
+                git status
+                echo
+                warn "Working tree is still not clean; please try again."
+            else
+                break
+            fi
+        done
+    fi
+
+    new_head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+    if [ "$new_head" = "$head" ]; then
+        echo "Warning: HEAD did not change; no action taken."
+        prompt_to_continue
+    else
+        blacklist_if_new_patch_id
+    fi
+}
+
+has_note () {
+    git notes show "$1" >/dev/null 2>&1
+}
+
+prompt_to_continue () {
+    echo -n "Press enter to continue ... "
+    read <&3
+}
+
+cherry_menu () {
+    skip=
+    while true; do
+        echo -n "Cherry-pick / blacklist / skip $abbrev_sha1, or quit [c/b/s/q]? "
+        read answer <&3
+        case "$answer" in
+            c)
+                break
+                ;;
+            b)
+                if ! has_note "$sha1"; then
+                    safe_run git notes append -m'skip: all
+XXX  (you can optionally change the "all" above to the name of the
+XXX  upstream branch if you want to limit blacklisting to that upstream)
+
+XXX  Enter your justification for blacklisting here or
+XXX  remove the whole note to cancel blacklisting.' "$sha1"
+                fi
+                safe_run git notes edit "$sha1" <&3
+                echo
+                if has_note "$sha1"; then
+                    colour "1;35" "Blacklisted $abbrev_sha1"
+                else
+                    colour "1;35" "$abbrev_sha1 not blacklisted"
+                fi
+                prompt_to_continue
+                skip=y
+                break
+                ;;
+            s)
+                colour "1;34" "Skipping $abbrev_sha1"
+                sleep 1
+                skip=y
+                break
+                ;;
+            q)
+                exit 0
+                ;;
+            *)
+                ;;
+        esac
+    done
+}
+
+warn () {
+    colour "1;33" "$*" >&2
+}
+
+fatal () {
+    colour "1;31" "$*" >&2
+    exit 1
+}
+
+safe_run () {
+    if ! "$@"; then
+        fatal "$* failed! Aborting." >&2
+    fi
+}
+
+divider () {
+    echo
+    echo "-----------------------------------------------------------------------"
+    echo
+}
+
+ARGV="$*"
+
+main "$@"
+
