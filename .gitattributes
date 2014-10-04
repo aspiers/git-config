@@ -9,3 +9,5 @@
 *.rb       diff=ruby
 *.ruby     diff=ruby
 *.tex      diff=tex
+*.el       diff=lisp
+*.scm      diff=lisp

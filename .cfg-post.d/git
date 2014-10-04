@@ -27,3 +27,5 @@ git config --global        core.attributesfile ~/.gitattributes
 git config --global        core.excludesfile ~/.gitignore
 git config --global        receive.denyCurrentBranch refuse
 git config --global --bool rerere.enabled true
+
+git config --global diff.lisp.xfuncname "^(\\(def.+)"
