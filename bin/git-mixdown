@@ -91,7 +91,7 @@ fatal () {
 
 safe_run () {
     if ! "$@"; then
-        fatal "$* failed! Aborting." >&2
+        fatal "$* failed! Aborting."
     fi
 }
 
@@ -108,6 +108,11 @@ main () {
     parse_opts "$@"
 
     orig_head=`git rev-parse --abbrev-ref HEAD`
+
+    if ! git rev-parse --quiet --verify "${base}^{commit}" >/dev/null; then
+        fatal "$base is not a valid commit ref! Aborting."
+    fi
+
     safe_run git checkout -B "$combined_branch" "$base"
     safe_run git merge --no-edit "${branches[@]}"
     if [ -z "$checkout" ]; then
