@@ -1,8 +1,24 @@
 #!/bin/bash
 #
-# "mixdown" multiple branches into a combined working branch.
-# Useful for testing a combination of bugfixes / features at once
-# via a throw-away temporary working branch.
+# git-mixdown - "mixdown" multiple branches into a combined working branch
+#
+# Useful for testing a combination of bugfixes / features at once via
+# a throw-away temporary working branch.  See accompanying utility git-mix.
+#
+# Copyright (C) 2013 Adam Spiers <git@adamspiers.org>
+#
+# The software in this repository is free software: you can redistribute
+# it and/or modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 combined_branch=working
 
@@ -31,8 +47,9 @@ Options:
 Points the target branch at BASE-BRANCH and then mixes all the other
 branches in.  Leaves the working copy with the target branch checked out.
 
-If no arguments are given, branches are read from .git/working-branches
-instead, which should be delimited by whitespace and/or newlines.
+If no arguments are given, branches are read from the mixdown
+section of git config instead, using only the keys corresponding
+to the target branch.
 EOF
     exit "$exit_code"
 }
@@ -67,12 +84,7 @@ parse_opts () {
     fi
 
     if [ $# = 0 ]; then
-        git_dir=`git rev-parse --git-dir` || exit 1
-        branch_file="$git_dir/working-branches"
-        if ! [ -e "$branch_file" ]; then
-            fatal "No arguments given but $branch_file didn't exist"
-        fi
-        branches=( $( grep -v '^ *#' "$branch_file" ) )
+        branches=( $( git mix "$combined_branch" ) )
         base="${branches[0]}"
         unset branches[0]
     else
@@ -80,8 +92,6 @@ parse_opts () {
         shift
         branches=( "$@" )
     fi
-
-    echo "Will start at $base and merge: ${branches[@]}"
 }
 
 fatal () {
@@ -113,6 +123,7 @@ main () {
         fatal "$base is not a valid commit ref! Aborting."
     fi
 
+    echo "Will start at $base and merge: ${branches[@]}"
     safe_run git checkout -B "$combined_branch" "$base"
     safe_run git merge --no-edit "${branches[@]}"
     if [ -z "$checkout" ]; then

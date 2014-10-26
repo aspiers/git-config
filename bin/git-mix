@@ -1,0 +1,178 @@
+#!/bin/bash
+#
+# git-mix - syntactic sugar for configuring "git mixdown"
+#
+# Wrapper around git-config(1) which makes it convenient to configure
+# mix branches for use with git-mixdown.
+#
+# Copyright (C) 2014 Adam Spiers <git@adamspiers.org>
+#
+# The software in this repository is free software: you can redistribute
+# it and/or modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This software is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+default_mix_branch=working
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+    if [ -n "$1" ]; then
+        echo >&2 "$*"
+        echo
+    fi
+
+    me='git mix'
+
+    cat <<EOF >&2
+usage: $me [options] [--] [arguments]
+
+Arguments:
+  <no arguments>           Show all available mixes
+  <target>                 Show mix for target branch
+  <target> A B [C ...]     Set mix for target branch to branches A, B, ...
+  [<target>] +D [-B ...]   Add/remove branches to/from mix for target
+                           branch (defaults to 'working')
+
+Options:
+  -h, --help               Show this help and exit
+  -d <target>              Remove mix for target branch
+
+You can also change the mix via git config, e.g. edit the mix order
+via git config --edit.
+EOF
+    exit "$exit_code"
+}
+
+parse_opts () {
+    checkout=
+
+    while [ $# != 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage 0
+                ;;
+            -d)
+                if [ $# != 2 ]; then
+                    usage
+                fi
+                delete_mix "$2"
+                exit 0
+                ;;
+            --)
+                shift
+                break
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    ARGV=( "$@" )
+}
+
+fatal () {
+    echo "$*" >&2
+    exit 1
+}
+
+show_mixes () {
+  # git config --list | grep "^mixdown\." | sed 's/^mixdown\.//' | \
+  #     sort -t= -k1,1 --stable
+  mixes=( $(
+      git config --list | grep "^mixdown\." | \
+          sed -e 's/^mixdown\.//' -e 's/=.*//' | sort -u
+  ) )
+  for mix in "${mixes[@]}"; do
+      echo -n "$mix: "
+      echo `list_mix "$mix"` # evil hack to convert new lines to spaces
+  done
+}
+
+list_mix () {
+    mix="$1"
+    if git config --get "mixdown.$mix" >/dev/null 2>&1; then
+        git config --list | grep "^mixdown\.$mix=" | sed "s/^mixdown\.$mix=//"
+    else
+        fatal "ERROR: No such mix configured for '$mix'"
+    fi
+}
+
+delete_mix () {
+    mix="$1"
+    git config --unset-all "mixdown.$mix"
+}
+
+set_mix () {
+    mix="$1"
+    shift
+
+    delete_mix "$mix"
+
+    for branch in "$@"; do
+        git config --add "mixdown.$mix" "$branch"
+    done
+}
+
+change_mix () {
+    mix="$1"
+    shift
+
+    key="mixdown.$mix"
+
+    for change in "$@"; do
+        case "$change" in
+            -*)
+                branch="${change#-}"
+                regexp="^$branch\$"
+                if git config --get "$key" "$regexp" >/dev/null; then
+                    git config --unset "$key" "$regexp"
+                else
+                    echo "WARNING: $branch was not in the mix for $mix" >&2
+                fi
+                ;;
+            +?*)
+                git config --add "$key" "${change#+}"
+                ;;
+            *)
+                usage "Invalid change '$change'."
+                ;;
+        esac
+    done
+}
+
+main () {
+    parse_opts "$@"
+    set -- "${ARGV[@]}"
+
+    if [ $# = 0 ]; then
+        show_mixes
+    elif [[ $1 == [-+]* ]]; then
+        change_mix "$default_mix_branch" "$@"
+    elif [ $# = 1 ]; then
+        list_mix "$1"
+    else
+        mix="$1"
+        shift
+        if [[ $1 == [-+]* ]]; then
+            change_mix "$mix" "$@"
+        else
+            set_mix "$mix" "$@"
+        fi
+    fi
+}
+
+main "$@"
