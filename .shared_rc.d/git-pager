@@ -14,7 +14,8 @@ case "$GIT_PAGER_MODE" in
         git_diff_highlight=y
         ;;
     diff)
-        git_pager_regexp='^diff .*'
+        # ggsh could be showing a merge commit
+        git_pager_regexp='^(diff|commit) .*'
         git_diff_highlight=y
         ;;
     commit)
