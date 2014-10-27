@@ -85,6 +85,11 @@ parse_opts () {
 
     if [ $# = 0 ]; then
         branches=( $( git mix "$combined_branch" ) )
+        if [ "${#branches[@]}" = 0 ]; then
+            err="No branches found for '$combined_branch' mix!"
+            err="$err\nMixes currently defined:\n`git mix`"
+            fatal "$err"
+        fi
         base="${branches[0]}"
         unset branches[0]
     else
