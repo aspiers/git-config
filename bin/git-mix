@@ -163,9 +163,9 @@ main () {
     elif [[ $1 == [-+]* ]]; then
         change_mix "$default_mix_branch" "$@"
     elif [ $# = 1 ]; then
-        list_mix "$1"
+        list_mix "${1,,}"
     else
-        mix="$1"
+        mix="${1,,}"
         shift
         if [[ $1 == [-+]* ]]; then
             change_mix "$mix" "$@"
