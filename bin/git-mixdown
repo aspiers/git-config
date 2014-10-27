@@ -39,10 +39,11 @@ usage () {
     cat <<EOF >&2
 Usage: $me [options] [BASE-BRANCH BRANCH2 [BRANCH3 ...]]
 Options:
-  -h, --help            Show this help and exit
-  -b, --branch BRANCH   Target branch for mixdown [default: $combined_branch]
-  -c, --checkout        Leave target branch checked out
-                        [default: restore previous checkout]
+  -h, --help               Show this help and exit
+  -b, --branch BRANCH      Target branch for mixdown [default: $combined_branch]
+  -c, --checkout           Leave target branch checked out
+                           [default: restore previous checkout]
+  -s, --strategy STRATEGY  Set merge strategy
 
 Points the target branch at BASE-BRANCH and then mixes all the other
 branches in.  Leaves the working copy with the target branch checked out.
@@ -56,6 +57,8 @@ EOF
 
 parse_opts () {
     checkout=
+    strategy=octopus
+    merge_opts=( )
 
     while [ $# != 0 ]; do
         case "$1" in
@@ -69,6 +72,14 @@ parse_opts () {
             -c|--checkout)
                 checkout=y
                 shift
+                ;;
+            -s|--strategy)
+                if [ -z "$2" ]; then
+                    usage "--strategy needs a value"
+                fi
+                strategy="$2"
+                merge_opts+=( -s "$2" )
+                shift 2
                 ;;
             -*)
                 usage "Unrecognised option: $1"
@@ -130,7 +141,15 @@ main () {
 
     echo "Will start at $base and merge: ${branches[@]}"
     safe_run git checkout -B "$combined_branch" "$base"
-    safe_run git merge --no-edit "${branches[@]}"
+
+    if [ "$strategy" = octopus ]; then
+        safe_run git merge --no-edit "${merge_opts[@]}" "${branches[@]}"
+    else
+        for branch in "${branches[@]}"; do
+            safe_run git merge --no-edit "${merge_opts[@]}" "$branch"
+        done
+    fi
+    
     if [ -z "$checkout" ]; then
         restore_head
     fi
