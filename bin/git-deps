@@ -249,11 +249,19 @@ class DependencyDetector(object):
         because without the lines from those commits, the hunk would
         not apply correctly.
         """
-        first_line_num = hunk.old_start
+        line_count = hunk.old_lines
+        if line_count == 0:
+            # Only possible explanation is that context_lines option
+            # is zero and this hunk only adds lines, without removing
+            # or changing any.  In this case we need to make sure we
+            # are adding in the right place, so retrieve two lines of
+            # context to sandwich the addition.
+            line_count = 2
+
         line_range_before = "-%d,%d" % (hunk.old_start, hunk.old_lines)
         line_range_after  = "+%d,%d" % (hunk.new_start, hunk.new_lines)
-        self.logger.debug("      Blaming hunk %s @ %s" %
-                          (line_range_before, parent.hex[:8]))
+        self.logger.debug("      Blaming hunk %d,+%d @ %s" %
+                          (hunk.old_start, line_count, parent.hex[:8]))
 
         if not self.tree_lookup(path, parent):
             # This is probably because dependent added a new directory
@@ -263,7 +271,7 @@ class DependencyDetector(object):
         cmd = [
             'git', 'blame',
             '--porcelain',
-            '-L', "%d,+%d" % (hunk.old_start, hunk.old_lines),
+            '-L', "%d,+%d" % (hunk.old_start, line_count),
             parent.hex, '--', path
         ]
         blame = subprocess.check_output(cmd)
@@ -320,14 +328,16 @@ class DependencyDetector(object):
                 self.notify_listeners('new_path', dependent, dependency, path, line_num)
 
             if line_num in self.dependencies[dependent_sha][dependency_sha][path]:
-                abort("line %d already found when blaming %s:%s" %
-                      (line_num, parent.hex[:8], path))
+                # This could happen with --context-lines=0 if two lines were added
+                # close together, causing line_count to be artificially increased to 2.
+                self.logger.debug("        line %d already found when blaming %s:%s" %
+                                  (line_num, parent.hex[:8], path))
 
             self.dependencies[dependent_sha][dependency_sha][path][line_num] = True
             self.notify_listeners('new_line', dependent, dependency, path, line_num)
 
         diff_format = '      |%8.8s %5s %s%s'
-        hunk_header = '@@ %s %s @@' % (line_range_before, line_range_after)
+        hunk_header = '@@ %s %s @@ (hunk from pygit2)' % (line_range_before, line_range_after)
         self.logger.debug(diff_format % ('--------', '-----', '', hunk_header))
         line_num = hunk.old_start
         for mode, line in hunk.lines:
@@ -411,6 +421,8 @@ def parse_args():
     )
     parser.add_argument('-l', '--log', dest='log', action='store_true',
                         help='Show commit logs for calculated dependencies [%(default)s]')
+    parser.add_argument('-f', '--format', dest='format', metavar='FORMAT', default='%h',
+                        help='Set output format (see below) [%(default)s]')
     parser.add_argument('-r', '--recurse', dest='recurse', action='store_true',
                         help='Follow dependencies recursively [%(default)s]')
     parser.add_argument('-e', '--exclude-commits', dest='exclude_commits',
