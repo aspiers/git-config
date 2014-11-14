@@ -29,3 +29,7 @@ git config --global        receive.denyCurrentBranch refuse
 git config --global --bool rerere.enabled true
 
 git config --global diff.lisp.xfuncname "^(\\(def.+)"
+
+# Work around port blocking at hotels etc.
+# See file:git.org::*protocols
+git config --global url."https://".insteadOf git://
