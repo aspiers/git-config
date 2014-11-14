@@ -50,3 +50,4 @@ _service:*
 .kdirstat.cache.gz
 .*.mscz,
 build-tmp/
+.~lock.*.od?#
