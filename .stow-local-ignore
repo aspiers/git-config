@@ -4,6 +4,7 @@
 
 # However, .git must be in this list:
 \.git
+/bin/git-deps
 
 .*,v
 RCS
