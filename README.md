@@ -12,6 +12,7 @@ Contents include:
 * [`git-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-upstream) - obtain the upstream tracking branch (N.B. depends on `git-head`, `git-root`, and `git-prefix`)
 * [`git-set-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-set-upstream) - set the upstream tracking branch (N.B. depends on `git-head` and `git-root`)
 * [`git-mixdown`](https://github.com/aspiers/git-config/blob/master/bin/git-mixdown) - [mixdown](http://en.wikipedia.org/wiki/Audio_mixing_(recorded_music)) multiple branches into a single working branch.  Useful for testing a combination of bugfixes / features at once via a throw-away temporary working branch.
+* [`git-mix`](https://github.com/aspiers/git-config/blob/master/bin/git-mix) - syntactic sugar for configuring `git mixdown`
 * [`git-merged`](https://github.com/aspiers/git-config/blob/master/bin/git-merged) - show which branches are merged into upstream or the given commit-ish (N.B. depends on `git-root` and `git-upstream`)
 * [`git-compare`](https://github.com/aspiers/git-config/blob/master/bin/git-compare) - compare two references to find out how far one is ahead/behind of the other
 * [`git-compare-upstream`](https://github.com/aspiers/git-config/blob/master/bin/git-compare-upstream) - set the upstream tracking branch (N.B. depends on `git-compare`, `git-head`, and `git-upstream`, and hence also on `git-root` and and `git-prefix`)
