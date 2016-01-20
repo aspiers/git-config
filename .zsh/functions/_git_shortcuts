@@ -19,6 +19,8 @@ case "$service" in
   ggl)   git_fn=log       ;;
   ggmv)  git_fn=mv        ;;
   ggr)   git_fn=reset     ;;
+  ggre)  git_fn=remote    ;;
+  ggrp)  git_fn=rev-parse ;;
   ggrb|ggrbi)
          git_fn=rebase    ;;
 #  ggrl)  git_fn=reflog    ;;
