@@ -146,7 +146,10 @@ main () {
         safe_run git merge --no-edit "${merge_opts[@]}" "${branches[@]}"
     else
         for branch in "${branches[@]}"; do
-            safe_run git merge --no-edit "${merge_opts[@]}" "$branch"
+            if ! git merge --no-edit "${merge_opts[@]}" "$branch"; then
+                echo "Fix conflicts, then exit shell to continue ..."
+                $SHELL
+            fi
         done
     fi
     
