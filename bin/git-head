@@ -13,13 +13,19 @@ set -o pipefail
 
 # This one only works with git >= 1.6.3, but that's been around
 # since Sept 2010 so it should be fine by now.
-ref=$( git rev-parse --abbrev-ref HEAD )
-if [ "$ref" = HEAD ]; then
-    # detached branch
-    git rev-parse HEAD
-else
-    echo "$ref"
-fi
+#ref=$( git rev-parse --abbrev-ref HEAD )
+#if [ "$ref" = HEAD ]; then
+#    # detached branch
+#    git rev-parse HEAD
+#else
+#    echo "$ref"
+#fi
 
-# Another option:
-#git symbolic-ref HEAD | sed 's,refs/heads/,,'
+# The maintainer-approved solution:
+# https://git-blame.blogspot.co.uk/2013/06/checking-current-branch-programatically.html
+# http://stackoverflow.com/questions/1593051/how-to-programmatically-determine-the-current-checked-out-git-branch
+if branch=$(git symbolic-ref --short -q HEAD); then
+    echo "$branch"
+else
+    git rev-parse HEAD
+fi
