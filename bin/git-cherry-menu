@@ -263,11 +263,11 @@ cherry_menu () {
                        branch="all"
                     fi
                     safe_run git notes append -m "skip: `echo $branch`
-XXX  (you can optionally change the "all" above to the name of the
-XXX  upstream branch if you want to limit blacklisting to that upstream)
+###  (you can optionally change the "all" above to the name of the
+###  upstream branch if you want to limit blacklisting to that upstream)
 
-XXX  Enter your justification for blacklisting here or
-XXX  remove the whole note to cancel blacklisting." "$sha1"
+### Enter your justification for blacklisting here or
+###  remove the whole note to cancel blacklisting." "$sha1"
                 fi
                 safe_run git notes edit "$sha1" <&3
                 echo
