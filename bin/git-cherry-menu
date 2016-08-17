@@ -45,6 +45,10 @@ suggested options:
           upstream branches. If one wants to blacklist a commit for a specific
           branch by default when doing a run of cherry-menu, then specify it here.
 
+    -c cherry-menu.skip-notes-edit=true
+          Skip editing the git-notes for this object. The default behaviour is to
+          edit the git note for this object when blacklisting.
+
 COMMAND is typically "git icing -v2" or "git cherry" but can be
 anything which gives output in the same format, e.g.
 
@@ -266,10 +270,12 @@ cherry_menu () {
 ###  (you can optionally change the "all" above to the name of the
 ###  upstream branch if you want to limit blacklisting to that upstream)
 
-### Enter your justification for blacklisting here or
+###  Enter your justification for blacklisting here or
 ###  remove the whole note to cancel blacklisting." "$sha1"
                 fi
-                safe_run git notes edit "$sha1" <&3
+                if ! $(git config cherry-menu.skip-notes-edit); then
+                    safe_run git notes edit "$sha1" <&3
+                fi
                 echo
                 if has_note "$sha1"; then
                     colour "1;35" "Blacklisted $abbrev_sha1"
