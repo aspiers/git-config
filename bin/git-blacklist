@@ -26,7 +26,8 @@ usage: ${me} <option> <upstream> <downstream> <keyword> [<skip-branch>]
 
 <upstream>:    upstream branch to backport to
 <downstream>:  downstream branch to backport from
-<keyword>:     keyword to match on in the first commit line
+<keyword>:     keyword to match on in the first commit line. The keyword might also be a regular expression
+               that works with grep AND contains no spaces.
 <skip-branch>: skip-branch that should match additionally before removal of blacklist git note.
                NOTE: the script assumes that the match is absolute and will thus fail to remove
                      a blacklist note that has more information in the git note.
@@ -66,7 +67,7 @@ blacklist_add()
         fi
         count=$(($count+1))
     done
-    echo Blacklisted $count commits for branch $upstream
+    echo Blacklisted $count commits for upstream branch $upstream
 }
 
 blacklist_remove()
@@ -86,7 +87,7 @@ blacklist_remove()
             count=$(($count+1))
         fi
     done
-    echo Removed blacklist for $count commit for brach $branch
+    echo Removed blacklist for $count commit for upstream brach $branch
 }
 
 OPTS=$option
