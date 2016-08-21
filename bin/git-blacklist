@@ -1,0 +1,104 @@
+#!/bin/bash
+#
+# Usage: git-blacklist add <upstream> <downstream> <match>
+#        git-blacklist remove <upstream> <downstream> <match> <skip-branch>
+# Blacklist a commits based on the first commit line search.
+
+option=$1
+upstream=$2
+downstream=$3
+search=$4
+branch=$5
+
+usage()
+{
+    me=`basename $0`
+
+    cat <<EOF >&2
+usage: ${me} <option> <upstream> <downstream> <keyword> [<skip-branch>]
+
+       ${me} add <upstream> <downstream> <keyword>
+       ${me} remove <upstream> <downstream> <keyword> [<skip-branch>]
+
+<option> one of:
+    add        blacklist all commits that have 'keyword' in their first commit line
+    remove     remove the blacklist note from all commits that have 'keyword' in their first commit line
+
+<upstream>:    upstream branch to backport to
+<downstream>:  downstream branch to backport from
+<keyword>:     keyword to match on in the first commit line. The keyword might also be a regular expression
+               that works with grep AND contains no spaces.
+<skip-branch>: skip-branch that should match additionally before removal of blacklist git note.
+               NOTE: the script assumes that the match is absolute and will thus fail to remove
+                     a blacklist note that has more information in the git note.
+EOF
+    exit 1
+}
+
+parse_opts()
+{
+    case "${option}" in
+    add)
+        if test $# != 4; then
+           usage
+        fi
+    ;;
+    remove)
+        if test $# != 5; then
+            usage
+        fi
+    ;;
+    *)
+        usage
+    ;;
+    esac
+}
+
+blacklist_add()
+{
+    count=0
+    BLACKLIST=`git-icing -v3 ${upstream} ${downstream} | grep ${search} | grep ^+ | awk -e '{ print $2 }'`
+
+    for sha in ${BLACKLIST}; do
+        git notes --ref=upstreaming append -m "skip: $upstream" $sha
+        if ! test $? -eq 0; then
+           echo "Fatal: $* failed! Aborting."
+           exit 1
+        fi
+        count=$(($count+1))
+    done
+    echo Blacklisted $count commits for upstream branch $upstream
+}
+
+blacklist_remove()
+{
+    branch=$1
+    count=0
+    BLACKLIST=`git-icing -v3 ${upstream} ${downstream} | grep ${search} | grep ^. | awk -e '{ print $2 }'`
+
+    for sha in ${BLACKLIST}; do
+        msg=`git notes --ref=upstreaming show $sha`
+        if test "${msg}" = "skip: $branch"; then
+            git notes --ref=upstreaming remove $sha
+            if ! test $? -eq 0; then
+               echo "Fatal: $* failed! Aborting."
+               exit 1
+            fi
+            count=$(($count+1))
+        fi
+    done
+    echo Removed blacklist for $count commit for upstream brach $branch
+}
+
+OPTS=$option
+main()
+{
+    parse_opts "$@"
+    case "${OPTS}" in
+    add) blacklist_add ;;
+    remove) blacklist_remove $branch ;;
+    esac
+}
+
+main "$@"
+exit 0
