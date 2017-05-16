@@ -33,3 +33,5 @@ git config --global diff.lisp.xfuncname "^(\\(def.+)"
 # Work around port blocking at hotels etc.
 # See file:git.org::*protocols
 git config --global url."https://".insteadOf git://
+
+git config --global credential.helper 'cache --timeout=3600'
