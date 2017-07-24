@@ -1,0 +1,5 @@
+#!/bin/bash
+
+commit="$1"
+shift
+ggk "$@" --select-commit="$commit"
