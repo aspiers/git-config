@@ -58,7 +58,7 @@ die "git rev-parse returned unexpected output: $obj_name\n"
 
 print "(full blob is $obj_name)\n" if $obj_name ne $blob_arg;
 
-open my $log, '-|', git => log => @ARGV, '--pretty=format:%T %h %s'
+open my $log, '-|', 'git', 'log', '--all', @ARGV, '--pretty=format:%T %h %s'
     or die "Couldn't open pipe to git-log: $!\n";
 
 while (<$log>) {
