@@ -1,5 +1,16 @@
 #!/bin/bash
 
+if [ -z "$1" ]; then
+    echo >&2 "usage: ggkc <commit> [<gitk options>...]"
+    exit 1
+fi
+
 commit="$1"
 shift
-ggk "$@" --select-commit="$commit"
+
+select=--select-commit="$commit"
+if [ -z "$1" ]; then
+    exec gitk --all "$select" &
+else
+    exec gitk "$@" "$select" &
+fi
