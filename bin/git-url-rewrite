@@ -15,7 +15,7 @@ usage () {
     fi
 
     cat <<EOF >&2
-Usage: 
+Usage:
   $me [<file-option>]           Lists all rewrite rules.
   $me [<file-option>] ABBREV    Lists rewrite rule(s) for ABBREV
   $me [<file-option>] [-p] ABBREV FULL
@@ -41,7 +41,7 @@ get_rewrites () {
         sort
 }
 
-get_rewrite () {
+get_rewrites_by_abbrev () {
     abbrev="$1"
 
     git config $config --list | \
@@ -49,6 +49,12 @@ get_rewrite () {
             if (/^url\.(.+)\.(push)?insteadOf='"$abbrev"'$/i) {
                 print(($2 ? "PUSH " : "") . $1);
             }'
+}
+
+get_rewrite_by_URL () {
+    URL="$1"
+
+    git config $config url.$URL.$insteadOf
 }
 
 get_and_clear_rewrite () {
@@ -68,6 +74,19 @@ set_rewrite () {
     [ -z "$1" ] && usage "Abbreviation cannot be empty."
     abbrev="$1"
     full="$2"
+
+    if [ -n "$full" ]; then
+        existing_abbrev=$( get_rewrite_by_URL "$full" )
+        if [ "$abbrev" = "$existing_abbrev" ]; then
+            : Nothing to change
+            return 0
+        fi
+        if [ -n "$existing_abbrev" ]; then
+            echo "$existing_abbrev already points to \"$full\"; git won't"\
+                 "allow pointing something else to it" >&2
+            exit 1
+        fi
+    fi
 
     existing_full=$( get_and_clear_rewrite "$abbrev" "$full" )
 
@@ -137,7 +156,7 @@ main () {
     if [ $# = 0 ]; then
         get_rewrites
     elif [ $# = 1 ]; then
-        get_rewrite "$1"
+        get_rewrites_by_abbrev "$1"
     elif [ $# = 2 ]; then
         set_rewrite "$@"
     else
