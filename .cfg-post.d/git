@@ -29,6 +29,9 @@ git config --global        receive.denyCurrentBranch refuse
 git config --global --bool rerere.enabled true
 
 git config --global diff.lisp.xfuncname "^(\\(def.+)"
+git config --global diff.sclang.xfuncname "^[[:space:]]*(\*?[[:alnum:]_]+ *\\{.*)"
+git config --global diff.schelp.xfuncname \
+    "^((TITLE|SUMMARY|DESCRIPTION|(SUB)?SECTION|(CLASS|INSTANCE)METHODS|PRIVATE|METHOD|EXAMPLES)::.*)"
 
 # Work around port blocking at hotels etc.
 # See file:git.org::*protocols

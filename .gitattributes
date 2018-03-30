@@ -11,3 +11,6 @@
 *.tex      diff=tex
 *.el       diff=lisp
 *.scm      diff=lisp
+*.sc       diff=sclang
+*.scd      diff=sclang
+*.schelp   diff=schelp
