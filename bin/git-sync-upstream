@@ -298,8 +298,8 @@ sync_with_upstream () {
     fi
 
     if [ "$behind" != 0 ]; then
-        rebase_on_upstream "$upstream"
-        #pull_from_upstream "$upstream"
+        #rebase_on_upstream "$upstream"
+        pull_from_upstream "$upstream"
     fi
 
     if [ "$ahead" != 0 ]; then
