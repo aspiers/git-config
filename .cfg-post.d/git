@@ -35,6 +35,12 @@ git config --global diff.schelp.xfuncname \
 
 # Work around port blocking at hotels etc.
 # See file:git.org::*protocols
-git config --global url."https://".insteadOf git://
+#
+# This is not a good idea to do globally, because not all sites use the same
+# path for both protocols.  For example:
+#
+#   https://libvirt.org/downloads.html#git
+#
+#git config --global url."https://".insteadOf git://
 
 git config --global credential.helper 'cache --timeout=3600'
