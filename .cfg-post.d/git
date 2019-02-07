@@ -13,6 +13,8 @@ git config --global color.ui auto
 git config --global color.pager true
 git config --global color.diff auto
 
+git config --global sendemail.confirm always
+
 # Paging
 #git config --global core.pager $PAGER
 git config --global --bool pager.diff-tree true
