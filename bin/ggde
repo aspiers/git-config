@@ -5,7 +5,8 @@ if [ "$1" = '--help' ]; then
 fi
 
 if desc=$( git describe --all "$@" 2>/dev/null ); then
-    echo "${desc#heads/}"
+    short="${desc#heads/}"
+    echo "${short#tags/}"
 else
     git describe --all --contains "$@" 2>/dev/null
 fi
