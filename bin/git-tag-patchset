@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Quick way of tagging patchsets as they get uploaded to Gerrit, to
+# keep track of a review's history.  Ideally git-review would do this.
+
+me=`basename $0`
+
+usage () {
+    if [ -n "$1" ]; then
+        echo "$*" >&2
+        echo
+    fi
+
+    cat <<EOF >&2
+Usage: $me PATCHSET-NUM [COMMIT-ISH]
+
+Make a tag for a given patchset.  The tag will be named in this format:
+
+    \${current_branch}-PS\${num}
+EOF
+    exit 1
+}
+
+if [ -z "$1" ] || [ $# -gt 2 ]; then
+    usage
+fi
+
+tag="`git head`-PS$1"
+target="${2:-HEAD}"
+
+if git rev-parse --quiet --verify "$tag" >/dev/null; then
+    current=$( git rev-parse "$tag")
+    if [[ "$current" == $(git rev-parse "$target") ]]; then
+        echo "$tag already points to $target"
+    else
+        echo "$tag already points to $(ggde $current); will force update ..."
+        git tag -f "$tag" "$target"
+    fi
+else
+    if git tag "$tag" "$target"; then
+        echo "Tagged $target as $tag"
+    fi
+fi
