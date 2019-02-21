@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Quick way of tagging patchsets as they get uploaded to Gerrit, to
-# keep track of a review's history.  Ideally git-review would do this.
+# keep track of a review's history.  Ideally git-review would do this;
+# submitted as https://storyboard.openstack.org/#!/story/2005068
 
 me=`basename $0`
 
