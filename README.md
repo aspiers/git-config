@@ -56,7 +56,7 @@ Little shell wrappers to make the git porcelain and higher-level scripts a littl
 
 ### Shorthand wrappers
 
-* [`gg*`](https://github.com/aspiers/git-config/tree/master/bin/) - a whole bunch of wrappers around standard git commands to reduce the number of keystrokes required and add a little bit of polish to the interface here and there
+* [`gg*`](https://github.com/aspiers/git-config/tree/master/bin/) - a whole bunch of wrappers around standard git commands to reduce the number of keystrokes required and add a little bit of polish to the interface here and there.
 
 ### ... and more!
 
