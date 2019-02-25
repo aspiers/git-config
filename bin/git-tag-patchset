@@ -13,32 +13,64 @@ usage () {
     fi
 
     cat <<EOF >&2
-Usage: $me PATCHSET-NUM [COMMIT-ISH]
+Usage: $me [PATCHSET-NUM] [COMMIT-ISH]
 
-Make a tag for a given patchset.  The tag will be named in this format:
+Make a tag for a new or given patchset.  The tag will be named in this format:
 
     \${current_branch}/PS\${num}
 EOF
     exit 1
 }
 
-if [ -z "$1" ] || [ $# -gt 2 ]; then
-    usage
-fi
+find_latest_patchset () {
+    git show-ref |
+        awk '$2 ~ /^refs\/tags\/'"${tag_prefix////\\/}"'[0-9]+$/ {print $2}' |
+        sed "s,^refs/tags/${tag_prefix},," |
+        tail -n 1
+}
 
-tag="`git head`/PS$1"
-target="${2:-`git head`}"
+check_branch_exists () {
+    if ! git rev-parse --quiet --verify "$branch" >/dev/null; then
+        echo >&2 "Branch $branch didn't exist; aborting."
+        exit 1
+    fi
+}
 
-if git rev-parse --quiet --verify "$tag" >/dev/null; then
-    current=$( git rev-parse "$tag")
-    if [[ "$current" == $(git rev-parse "$target") ]]; then
-        echo "$tag already points to $target"
+main () {
+    if [ $# -gt 2 ]; then
+        usage
+    fi
+
+    branch="${2:-`git head`}"
+    check_branch_exists
+
+    tag_prefix="$branch/PS"
+
+    if [ -n "$1" ]; then
+        tag="${tag_prefix}$1"
     else
-        echo "$tag already points to $(ggde $current); will force update ..."
-        git tag -f "$tag" "$target"
+        if ! latest_patchset=$( find_latest_patchset ); then
+            echo >&2 "Couldn't figure out latest existing patchset for $branch; aborting."
+            exit 1
+        fi
+        new_patchset="$(( latest_patchset + 1 ))"
+        echo "Latest patchset is $latest_patchset; new patchset will be $new_patchset"
+        tag="${tag_prefix}$new_patchset"
     fi
-else
-    if git tag "$tag" "$target"; then
-        echo "Tagged $target as $tag"
+
+    if git rev-parse --quiet --verify "$tag" >/dev/null; then
+        current=$( git rev-parse "$tag")
+        if [[ "$current" == $(git rev-parse "$branch") ]]; then
+            echo "$tag already points to $branch"
+        else
+            echo "$tag already points to $(ggde $current); will force update ..."
+            git tag -f "$tag" "$branch"
+        fi
+    else
+        if git tag "$tag" "$branch"; then
+            echo "Tagged $branch as $tag"
+        fi
     fi
-fi
+}
+
+main "$@"
