@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Quick way of tagging patchsets as they get uploaded to Gerrit, to
+# Quick way of tagging patch sets as they get uploaded to Gerrit, to
 # keep track of a review's history.  Ideally git-review would do this;
 # submitted as https://storyboard.openstack.org/#!/story/2005068
 
@@ -13,16 +13,16 @@ usage () {
     fi
 
     cat <<EOF >&2
-Usage: $me [PATCHSET-NUM] [COMMIT-ISH]
+Usage: $me [PATCH-SET-NUM] [COMMIT-ISH]
 
-Make a tag for a new or given patchset.  The tag will be named in this format:
+Make a tag for a new or given patch set.  The tag will be named in this format:
 
     \${current_branch}/PS\${num}
 EOF
     exit 1
 }
 
-find_latest_patchset () {
+find_latest_patch_set () {
     git show-ref |
         awk '$2 ~ /^refs\/tags\/'"${tag_prefix////\\/}"'[0-9]+$/ {print $2}' |
         sed "s,^refs/tags/${tag_prefix},," |
@@ -49,13 +49,13 @@ main () {
     if [ -n "$1" ]; then
         tag="${tag_prefix}$1"
     else
-        if ! latest_patchset=$( find_latest_patchset ); then
-            echo >&2 "Couldn't figure out latest existing patchset for $branch; aborting."
+        if ! latest_patch_set=$( find_latest_patch_set ); then
+            echo >&2 "Couldn't figure out latest existing patch set for $branch; aborting."
             exit 1
         fi
-        new_patchset="$(( latest_patchset + 1 ))"
-        echo "Latest patchset is $latest_patchset; new patchset will be $new_patchset"
-        tag="${tag_prefix}$new_patchset"
+        new_patch_set="$(( latest_patch_set + 1 ))"
+        echo "Latest patch set is $latest_patch_set; new patch set will be $new_patch_set"
+        tag="${tag_prefix}$new_patch_set"
     fi
 
     if git rev-parse --quiet --verify "$tag" >/dev/null; then
