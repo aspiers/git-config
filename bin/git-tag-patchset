@@ -30,6 +30,7 @@ EOF
 }
 
 find_latest_patch_set () {
+    set -o pipefail
     git show-ref |
         awk '$2 ~ /^refs\/tags\/'"${tag_prefix////\\/}"'[0-9]+$/ {print $2}' |
         sed "s,^refs/tags/${tag_prefix},," |
@@ -59,12 +60,18 @@ main () {
     if [ -n "$1" ]; then
         tag="${tag_prefix}$1"
     else
-        if ! latest_patch_set=$( find_latest_patch_set ); then
+        latest_patch_set=$( find_latest_patch_set )
+        if [[ $? != 0 ]]; then
             echo >&2 "Couldn't figure out latest existing patch set for $branch; aborting."
             exit 1
         fi
-        new_patch_set="$(( latest_patch_set + 1 ))"
-        echo "Latest patch set is $latest_patch_set; new patch set will be $new_patch_set"
+        if [[ -z "$latest_patch_set" ]]; then
+            echo >&2 "No previous patchset; assuming this is the first."
+            new_patch_set=1
+        else
+            new_patch_set="$(( latest_patch_set + 1 ))"
+            echo "Latest patch set is $latest_patch_set; new patch set will be $new_patch_set"
+        fi
         tag="${tag_prefix}$new_patch_set"
     fi
 
