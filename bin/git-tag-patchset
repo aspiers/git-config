@@ -34,6 +34,7 @@ find_latest_patch_set () {
     git show-ref |
         awk '$2 ~ /^refs\/tags\/'"${tag_prefix////\\/}"'[0-9]+$/ {print $2}' |
         sed "s,^refs/tags/${tag_prefix},," |
+        sort -n |
         tail -n 1
 }
 
