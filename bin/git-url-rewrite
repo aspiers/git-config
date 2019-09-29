@@ -33,7 +33,7 @@ EOF
 get_rewrites () {
     git config $config --list | \
         perl -lne '
-            if (/^url\.(.+)\.(push)?insteadOf=(.+)$/i) {
+            if (m!^url\.(.+)\.(push)?insteadOf=(.+)$!i) {
                 $abbrev  = sprintf "%-15s", $3;
                 $full = $1;
                 $abbrev =~ s/ {0,5}$/ PUSH/ if $2;
@@ -47,7 +47,7 @@ get_rewrites_by_abbrev () {
 
     git config $config --list | \
         perl -lne '
-            if (/^url\.(.+)\.(push)?insteadOf='"$abbrev"'$/i) {
+            if (m!^url\.(.+)\.(push)?insteadOf='"${abbrev//!/\!}"'$!i) {
                 print(($2 ? "PUSH " : "") . $1);
             }'
 }
@@ -64,7 +64,7 @@ get_and_clear_rewrite () {
 
     git config $config --list | \
         perl -lne '
-            if (/^(url\.(.+)\.'"$insteadOf"')='"$abbrev"'$/i) {
+            if (m!^(url\.(.+)\.'"$insteadOf"')='"${abbrev//!/\!}"'$!i) {
                 print $2;
                 next if $2 eq "'"$full"'";
                 system qw(git config '"$config"' --unset), $1;
