@@ -51,3 +51,4 @@ _service:*
 .*.mscz,
 build-tmp/
 .~lock.*.od?#
+.*.swp
