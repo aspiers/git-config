@@ -97,6 +97,7 @@ show_mixes () {
           sed -e 's/^mixdown\.//' -e 's/=.*//' | sort -u
   ) )
   for mix in "${mixes[@]}"; do
+      unescape_mix
       echo -n "$mix: "
       echo `list_mix "$mix"` # evil hack to convert new lines to spaces
   done
@@ -104,6 +105,7 @@ show_mixes () {
 
 list_mix () {
     mix="$1"
+    escape_mix
     if git config --get "mixdown.$mix" >/dev/null 2>&1; then
         git config --list | grep "^mixdown\.$mix=" | sed "s/^mixdown\.$mix=//"
     else
@@ -113,11 +115,13 @@ list_mix () {
 
 delete_mix () {
     mix="$1"
+    escape_mix
     git config --unset-all "mixdown.$mix"
 }
 
 set_mix () {
     mix="$1"
+    escape_mix
     shift
 
     delete_mix "$mix"
@@ -127,11 +131,22 @@ set_mix () {
     done
 }
 
+SLASH="-x2f-"
+
+escape_mix () {
+    mix="${mix//\//$SLASH}"
+}
+
+unescape_mix () {
+    mix="${mix//$SLASH/\/}"
+}
+
 change_mix () {
     mix="$1"
+    escape_mix
     shift
 
-    key="mixdown.$mix"
+    key="mixdown.${mix//\//_}"
 
     for change in "$@"; do
         case "$change" in
