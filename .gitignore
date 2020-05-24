@@ -52,3 +52,4 @@ _service:*
 build-tmp/
 .~lock.*.od?#
 .*.swp
+.mypy_cache/
