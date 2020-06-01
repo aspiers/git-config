@@ -17,8 +17,10 @@ esac
 
 LESS="$LESS -S"
 
-: ${GIT_PAGER_MODE:=none}
-export GIT_PAGER_MODE
+# FIXME: why was this here? We want to default to a pager when
+# this command is called directly.
+#: ${GIT_PAGER_MODE:=none}
+
 . $ZDOTDIR/.shared_rc.d/git-pager
 
 exec git log --graph --color --decorate --abbrev-commit --date=relative \
