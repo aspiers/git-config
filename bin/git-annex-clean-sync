@@ -1,0 +1,28 @@
+#!/bin/zsh
+
+# Run git annex sync while avoiding trying to touch ignored or
+# unavailable remotes.
+
+opts=()
+for remote in $( git remote ); do
+    if git config --type=bool remote.$remote.annex-ignore | grep -q true
+    then
+        # For some reason git-annex still tries to pull from ignored remotes
+        opts+=( -c remote.$remote.url= )
+        echo "$remote is ignored"
+    elif git config --type=bool remote.$remote.annex-ping | grep -q true
+    then
+        if git ls-remote $remote >&/dev/null; then
+            echo "$remote is up"
+        else
+            echo "$remote appears to be down; excluding from sync"
+            opts+=(
+                -c remote.$remote.url=
+                -c remote.$remote.annex-ignore=true
+            )
+        fi
+    fi
+done
+
+echo git $opts[@] annex sync
+git $opts[@] annex sync
