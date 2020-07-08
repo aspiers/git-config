@@ -5,14 +5,12 @@
 
 opts=()
 for remote in $( git remote ); do
-    if git config --type=bool remote.$remote.annex-ignore | grep -q true
-    then
+    if git-remote-annex-is-ignored $remote; then
         # For some reason git-annex still tries to pull from ignored remotes
         opts+=( -c remote.$remote.url= )
         echo "$remote is ignored"
-    elif git config --type=bool remote.$remote.annex-ping | grep -q true
-    then
-        if git ls-remote $remote >&/dev/null; then
+    elif git-should-ping-remote-annex; then
+        if git-remote-is-up $remote; then
             echo "$remote is up"
         else
             echo "$remote appears to be down; excluding from sync"
