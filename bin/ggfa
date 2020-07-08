@@ -1,3 +1,17 @@
 #!/bin/bash
 
-exec git fetch --prune --all "$@"
+#exec git fetch --prune --all "$@"
+
+for remote in $( git remote ); do
+    if git-remote-annex-is-ignored $remote; then
+        echo "$remote is ignored"
+        continue
+    fi
+
+    if git-should-ping-remote-annex $remote && ! git-remote-is-up $remote; then
+        echo "$remote appears to be down; excluding from sync"
+        continue
+    fi
+
+    git fetch --prune $remote
+done
