@@ -9,7 +9,7 @@ for remote in $( git remote ); do
         # For some reason git-annex still tries to pull from ignored remotes
         opts+=( -c remote.$remote.url= )
         echo "$remote is ignored"
-    elif git-should-ping-remote-annex; then
+    elif git-should-ping-remote-annex $remote; then
         if git-remote-is-up $remote; then
             echo "$remote is up"
         else
