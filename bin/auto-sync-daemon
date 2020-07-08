@@ -1,0 +1,80 @@
+#!/usr/bin/env zsh
+
+BRANCH=master  # FIXME: parameterise at some point
+
+process_inotify_batch () {
+    while read dir action file; do
+        try_sync
+
+        # This should not be unnecessary since we are relying on inotifywait
+        # to only return a single event; the filtering is done by that
+        # process, not this loop.
+        break
+    done
+}
+
+try_sync () {
+    if detect_ssh_agent; then
+        # Do a sync regardless of whether auto-commit did anything,
+        # because another remote may have pushed changes to our
+        # synced/master branch.  First give other remotes a chance
+        # to completely finish their push, just in case of any races.
+        sleep 5
+        git-annex-clean-sync
+    else
+        echo >&2 "WARNING: can't connect to ssh-agent; skipping annex sync"
+    fi
+}
+
+main () {
+    if ! inotifywait --help | grep -q -- '--include'; then
+        echo >&2 "inotifywait doesn't support --include; aborting!"
+        exit 1
+    fi
+
+    if [ $# != 1 ]; then
+        cat <<EOF >&2
+Usage: $(basename $me) REPO-DIR
+EOF
+        exit 1
+    fi
+
+    repo_dir="$1"
+    cd "$repo_dir"
+
+    if [[ -e HEAD ]] && [[ -e info ]] && [[ -e objects ]] && [[ -e refs ]] &&
+           [[ -e branches ]]
+    then
+        mode=bare
+        git_dir=.
+    elif [[ -d .git ]]; then
+        mode=worktree
+        git_dir=.git
+    else
+        echo >&2 "`pwd` isn't a git repo; aborting!"
+        exit 1
+    fi
+
+    # Do this at startup to allow easy checking at startup time that
+    # the agent was detected correct.
+    detect_ssh_agent
+
+    # This was a massive PITA to get right.  It seems that if you
+    # specify specific files then it will look up the inodes on
+    # start-up and only monitor those.  There's some similar weirdness
+    # with moves too.  Suffice to say that it's necessary to use
+    # --include and watch the whole directory.  -r is needed to catch
+    # the synced/ subdirectory too.  For more clues see
+    # https://unix.stackexchange.com/questions/164794/why-doesnt-inotifywatch-detect-changes-on-added-files
+    while true; do
+        inotifywait \
+                -q -r \
+                --include "/($BRANCH|synced/($BRANCH|git-annex))\$" \
+                -e create -e modify -e move -e delete \
+                "$git_dir/refs/heads" |
+            process_inotify_batch
+    done
+}
+
+me="$0"
+main "$@"

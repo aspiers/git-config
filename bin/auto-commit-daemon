@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+
+debug=
+if [[ "$1" == '-d' ]]; then
+    debug=-d
+    shift
+fi
+
+if [ $# != 3 ]; then
+    cat <<EOF >&2
+Usage: $(basename $0) [-d] REPO-DIR SLEEP MIN-AGE
+EOF
+    exit 1
+fi
+
+repo_dir="$1"
+sleep="$2"
+min_age="$3"
+
+cd "$repo_dir"
+
+for var in name email; do
+    if ! git config user.$var >/dev/null; then
+        echo >&2 "Error: user.$var not set in git config; aborting"
+        exit 1
+    fi
+done
+
+while true; do
+    git auto-commit $debug -m "$min_age"
+    sleep "$sleep"
+done

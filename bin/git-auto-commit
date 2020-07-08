@@ -1,0 +1,279 @@
+#!/usr/bin/env python3
+
+import argparse
+import datetime
+import logging
+import os.path
+import pygit2       # type: ignore
+import subprocess
+import sys
+from textwrap import dedent, wrap
+
+
+DEFAULT_MIN_AGE = datetime.timedelta(minutes=5).total_seconds()
+
+STATUS_FLAGS = {
+    pygit2.GIT_STATUS_CURRENT: "CURRENT",
+    pygit2.GIT_STATUS_INDEX_NEW: "INDEX_NEW",
+    pygit2.GIT_STATUS_INDEX_MODIFIED: "INDEX_MODIFIED",
+    pygit2.GIT_STATUS_INDEX_DELETED: "INDEX_DELETED",
+    pygit2.GIT_STATUS_WT_NEW: "WT_NEW",
+    pygit2.GIT_STATUS_WT_MODIFIED: "WT_MODIFIED",
+    pygit2.GIT_STATUS_WT_DELETED: "WT_DELETED",
+    pygit2.GIT_STATUS_IGNORED: "IGNORED",
+    pygit2.GIT_STATUS_CONFLICTED: "CONFLICTED",
+}
+
+FORMAT = '%(levelname)-7s | %(message)s'
+logging.basicConfig(format=FORMAT)
+
+
+def get_status_output(flags):
+    if flags & pygit2.GIT_STATUS_IGNORED:
+        return "!!"
+    elif flags & pygit2.GIT_STATUS_WT_NEW:
+        return "??"
+    elif flags & pygit2.GIT_STATUS_WT_MODIFIED:
+        return " M"
+    elif flags & pygit2.GIT_STATUS_WT_DELETED:
+        return " D"
+    elif flags & pygit2.GIT_STATUS_INDEX_NEW:
+        return "A "
+    elif flags & pygit2.GIT_STATUS_INDEX_MODIFIED:
+        return "M "
+    elif flags & pygit2.GIT_STATUS_INDEX_DELETED:
+        return "D "
+    elif flags & pygit2.GIT_STATUS_CONFLICTED:
+        return "UU"
+    elif flags & pygit2.GIT_STATUS_CURRENT:
+        return ".."
+    else:
+        return "  "
+
+
+def get_status_flags(flags):
+    return [
+        descr
+        for flag, descr in STATUS_FLAGS.items()
+        if flags & flag
+    ]
+
+
+def file_is_staged(flags):
+    return flags & (pygit2.GIT_STATUS_INDEX_NEW
+                    | pygit2.GIT_STATUS_INDEX_MODIFIED
+                    | pygit2.GIT_STATUS_INDEX_DELETED)
+
+
+def file_is_conflicted(flags):
+    return flags & pygit2.GIT_STATUS_CONFLICTED
+
+
+def get_hostname():
+    nick_file = os.path.expanduser("~/.localhost-nickname")
+    if os.path.isfile(nick_file):
+        with open(nick_file) as f:
+            return f.readline().rstrip("\n")
+    else:
+        return os.getenv("HOST") or os.getenv("HOSTNAME")
+
+
+def quit(msg):
+    logging.debug(msg)
+    sys.exit(1)
+
+
+def abort(msg):
+    logging.error(msg)
+    sys.exit(1)
+
+
+class GitAutoCommitter:
+    def __init__(self, repo_path, min_age):
+        self.repo_path = repo_path
+        self.min_age = datetime.timedelta(seconds=min_age)
+        logging.debug("GitAutoCommitter with min age %ds on repo %s"
+                      % (int(self.min_age.total_seconds()), self.repo_path))
+        self.repo = pygit2.Repository(repo_path)
+        self.check_config()
+
+    def check_config(self):
+        if self.config_get("user.name") is None:
+            abort("user.name is not set in git config; aborting!")
+        if self.config_get("user.email") is None:
+            abort("user.name is not set in git config; aborting!")
+
+    def manual_attention_required(self):
+        found_issues = False
+        for filepath, flags in self.process_files():
+            if not filepath.endswith(".org"):
+                # logging.debug(f"# {filepath} not an .org file")
+                continue
+
+            if self.ignored(filepath):
+                # logging.debug(f"# {filepath} ignored by git")
+                continue
+
+            st = get_status_output(flags)
+            if file_is_staged(flags):
+                logging.debug(f"{st} {filepath}\t\t<-- staged")
+                found_issues = True
+            elif file_is_conflicted(flags):
+                logging.debug(f"{st} {filepath}\t\t<-- conflicted")
+                found_issues = True
+            else:
+                logging.debug(f"{st} {filepath}")
+
+        return found_issues
+
+    def auto_commit_changes(self):
+        staged = self.stage_changes()
+        if staged > 0:
+            self.commit_changes()
+        else:
+            quit("Nothing to commit")
+
+    def stage_changes(self):
+        staged = 0
+
+        for filepath, flags in self.process_files():
+            if not filepath.endswith(".org"):
+                # logging.debug(f"# {filepath} not an .org file")
+                continue
+
+            if self.ignored(filepath):
+                logging.debug(f"# {filepath} ignored by git")
+                continue
+
+            # Flags can be found here:
+            # https://github.com/libgit2/pygit2/blob/320ee5e733039d4a3cc952b287498dbc5737c353/src/pygit2.c#L312-L320
+            if flags & pygit2.GIT_STATUS_WT_NEW:
+                self.stage_file(filepath, "new")
+                staged += 1
+            elif flags & pygit2.GIT_STATUS_WT_MODIFIED:
+                commit_age = self.time_since_last_commit(filepath)
+                file_age = self.time_since_mtime(filepath)
+                if commit_age < self.min_age:
+                    logging.debug(f"Not staging {filepath}, "
+                                  f"last committed {commit_age} ago")
+                elif file_age < self.min_age:
+                    logging.debug(f"Not staging {filepath}, "
+                                  f"last modified {file_age} ago")
+                else:
+                    self.stage_file(filepath, "changed")
+                    staged += 1
+
+            # else:
+            #     fl = " ".join(get_status_flags(flags))
+            #     logging.debug(f"Not staging {filepath} with flags {fl}")
+
+        if staged > 0:
+            self.repo.index.write()
+        return staged
+
+    def config_get(self, name):
+        try:
+            return self.repo.config[name]
+        except KeyError:
+            return None
+
+    def commit_changes(self):
+        author = pygit2.Signature(
+            self.repo.config["user.name"],
+            self.repo.config["user.email"]
+        )
+        committer = pygit2.Signature(
+            self.config_get("auto-commit.name")
+            or self.config_get("user.name"),
+            self.config_get("auto-commit.email")
+            or self.config_get("user.email")
+        )
+        tree = self.repo.index.write_tree()
+        head_oid = self.repo.head.resolve().target
+        host = get_hostname()
+        message = f"auto-commit on {host} by {__file__}"
+        oid = self.repo.create_commit( # noqa
+            "refs/heads/master", author, committer, message, tree,
+            [head_oid]  # parent commit(s)
+        )
+        # commit = self.repo.get(oid)
+        # logging.debug(f"\n{commit.short_id} {message}")
+        logging.debug("")
+        subprocess.call(["git", "show", "--format=fuller", "--name-status"])
+
+    def process_files(self):
+        for filepath, flags in self.repo.status().items():
+            yield filepath, flags
+
+    def ignored(self, filepath):
+        dirname, filename = os.path.split(filepath)
+        if filename.startswith(".#"):
+            # emacs lock file
+            return True
+
+        return False
+
+    def time_since_mtime(self, filepath):
+        now = datetime.datetime.now()
+        last_change = datetime.datetime.fromtimestamp(
+            os.stat(filepath).st_mtime)
+        return now - last_change
+
+    def time_since_last_commit(self, filepath):
+        descr = subprocess.check_output(
+            ["git", "describe", "--always", f"HEAD:{filepath}"],
+            encoding='utf-8')
+        ref, _path = descr.split(":", 1)
+        rev = self.repo.revparse_single(ref)
+        now = datetime.datetime.now()
+        last_change = datetime.datetime.fromtimestamp(rev.commit_time)
+        return now - last_change
+
+    def stage_file(self, filepath, reason):
+        logging.debug(f"%-20s {filepath}" % f"Staged {reason} file:")
+        self.repo.index.add(filepath)
+
+
+def parse_args():
+    descr = "\n".join(wrap(dedent("""\
+        Automatically commit .org files last modified or committed
+        before a certain age.  Doesn't do anything if any change
+        is already staged in git's index.
+    """), width=int(os.getenv("COLUMNS", "70"))))
+
+    parser = argparse.ArgumentParser(
+        description=descr,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-d", "--debug", action="store_true",
+        help="Enable debug output"
+    )
+    parser.add_argument(
+        "-m", "--min-age", metavar="SECS", type=int, default=DEFAULT_MIN_AGE,
+        help="Minimum number of seconds since a file needs to have been "
+        "last updated in order for it to get committed."
+    )
+    parser.add_argument(
+        "repo_path", metavar="REPO-PATH", nargs="?",
+        default=".", help="Path to repository to auto-commit"
+    )
+
+    return parser.parse_known_args()
+
+
+def main():
+    options, args = parse_args()
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    gac = GitAutoCommitter(options.repo_path, options.min_age)
+
+    if gac.manual_attention_required():
+        abort("Manual attention required; aborting.")
+
+    logging.debug("")
+    gac.auto_commit_changes()
+
+
+main()
