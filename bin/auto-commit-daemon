@@ -6,16 +6,21 @@ if [[ "$1" == '-d' ]]; then
     shift
 fi
 
-if [ $# != 3 ]; then
+if [ $# != 1 ]; then
     cat <<EOF >&2
-Usage: $(basename $0) [-d] REPO-DIR SLEEP MIN-AGE
+Usage: $(basename $0) [-d] REPO-DIR
 EOF
     exit 1
 fi
 
 repo_dir="$1"
-sleep="$2"
-min_age="$3"
+
+for var in SLEEP MIN_AGE; do
+    if [ -z "${(P)var}" ]; then
+        echo >&2 "Error: \$$var not set; aborting"
+        exit 1
+    fi
+done
 
 cd "$repo_dir"
 
@@ -27,6 +32,6 @@ for var in name email; do
 done
 
 while true; do
-    git auto-commit $debug -m "$min_age"
-    sleep "$sleep"
+    git auto-commit $debug -m "$MIN_AGE"
+    sleep "$SLEEP"
 done
