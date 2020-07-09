@@ -101,7 +101,7 @@ class GitAutoCommitter:
         if self.config_get("user.name") is None:
             abort("user.name is not set in git config; aborting!")
         if self.config_get("user.email") is None:
-            abort("user.name is not set in git config; aborting!")
+            abort("user.email is not set in git config; aborting!")
 
     def manual_attention_required(self):
         found_issues = False
