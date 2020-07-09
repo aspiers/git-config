@@ -15,12 +15,16 @@ fi
 
 repo_dir="$1"
 
-for var in SLEEP MIN_AGE; do
+for var in SLEEP; do
     if [ -z "${(P)var}" ]; then
         echo >&2 "Error: \$$var not set; aborting"
         exit 1
     fi
 done
+
+if [ -n "$MIN_AGE" ]; then
+    echo >&2 "WARNING: $0 should not have \$MIN_AGE set"
+fi
 
 cd "$repo_dir"
 
@@ -32,6 +36,6 @@ for var in name email; do
 done
 
 while true; do
-    git auto-commit $debug -m "$MIN_AGE"
+    git auto-commit $debug
     sleep "$SLEEP"
 done

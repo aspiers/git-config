@@ -5,12 +5,11 @@ import datetime
 import logging
 import os.path
 import pygit2       # type: ignore
+import re
 import subprocess
 import sys
 from textwrap import dedent, wrap
 
-
-DEFAULT_MIN_AGE = datetime.timedelta(minutes=5).total_seconds()
 
 STATUS_FLAGS = {
     pygit2.GIT_STATUS_CURRENT: "CURRENT",
@@ -89,11 +88,9 @@ def abort(msg):
 
 
 class GitAutoCommitter:
-    def __init__(self, repo_path, min_age):
+    def __init__(self, repo_path):
         self.repo_path = repo_path
-        self.min_age = datetime.timedelta(seconds=min_age)
-        logging.debug("GitAutoCommitter with min age %ds on repo %s"
-                      % (int(self.min_age.total_seconds()), self.repo_path))
+        logging.debug("GitAutoCommitter on repo %s" % self.repo_path)
         self.repo = pygit2.Repository(repo_path)
         self.check_config()
 
@@ -106,12 +103,12 @@ class GitAutoCommitter:
     def manual_attention_required(self):
         found_issues = False
         for filepath, flags in self.process_files():
-            if not filepath.endswith(".org"):
-                # logging.debug(f"# {filepath} not an .org file")
-                continue
-
             if self.ignored(filepath):
                 # logging.debug(f"# {filepath} ignored by git")
+                continue
+
+            if self.auto_commit_policy(filepath) is None:
+                logging.debug(f"# {filepath} has no autocommit policy")
                 continue
 
             st = get_status_output(flags)
@@ -151,15 +148,7 @@ class GitAutoCommitter:
                 self.stage_file(filepath, "new")
                 staged += 1
             elif flags & pygit2.GIT_STATUS_WT_MODIFIED:
-                commit_age = self.time_since_last_commit(filepath)
-                file_age = self.time_since_mtime(filepath)
-                if commit_age < self.min_age:
-                    logging.debug(f"Not staging {filepath}, "
-                                  f"last committed {commit_age} ago")
-                elif file_age < self.min_age:
-                    logging.debug(f"Not staging {filepath}, "
-                                  f"last modified {file_age} ago")
-                else:
+                if self.should_commit(filepath):
                     self.stage_file(filepath, "changed")
                     staged += 1
 
@@ -170,6 +159,48 @@ class GitAutoCommitter:
         if staged > 0:
             self.repo.index.write()
         return staged
+
+    def auto_commit_policy(self, filepath):
+        return self.repo.get_attr(filepath, "autocommit")
+
+    def policy_min_age(self, policy, filepath):
+        m = re.match(r'min-age=\+(\d+)([mshd])', policy)
+        if not m:
+            abort(f"Couldn't parse autocommit attribute {policy} for {filepath}")
+        amount = int(m.group(1))
+        unit = m.group(2)
+        if unit == "s":
+            secs = amount
+        elif unit == "m":
+            secs = amount * 60
+        elif unit == "h":
+            secs = amount * 60 * 60
+        elif unit == "d":
+            secs = amount * 60 * 60 * 24
+        else:
+            abort("BUG in policy_min_age")
+        logging.debug(f"{filepath} has min-age policy of {secs} secs")
+        return datetime.timedelta(seconds=secs)
+
+    def should_commit(self, filepath):
+        policy = self.auto_commit_policy(filepath)
+        if policy is None:
+            return False
+
+        min_age = self.policy_min_age(policy, filepath)
+        commit_age = self.time_since_last_commit(filepath)
+        file_age = self.time_since_mtime(filepath)
+        if commit_age < min_age:
+            logging.debug(f"Not staging {filepath}, "
+                          f"last committed {commit_age} ago")
+            return False
+
+        if file_age < min_age:
+            logging.debug(f"Not staging {filepath}, "
+                          f"last modified {file_age} ago")
+            return False
+
+        return True
 
     def config_get(self, name):
         try:
@@ -250,11 +281,6 @@ def parse_args():
         help="Enable debug output"
     )
     parser.add_argument(
-        "-m", "--min-age", metavar="SECS", type=int, default=DEFAULT_MIN_AGE,
-        help="Minimum number of seconds since a file needs to have been "
-        "last updated in order for it to get committed."
-    )
-    parser.add_argument(
         "repo_path", metavar="REPO-PATH", nargs="?",
         default=".", help="Path to repository to auto-commit"
     )
@@ -267,7 +293,7 @@ def main():
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    gac = GitAutoCommitter(options.repo_path, options.min_age)
+    gac = GitAutoCommitter(options.repo_path)
 
     if gac.manual_attention_required():
         abort("Manual attention required; aborting.")
