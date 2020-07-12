@@ -1,0 +1,26 @@
+#!/bin/zsh
+
+# Run git annex while avoiding trying to touch ignored or
+# unavailable remotes.
+
+opts=()
+for remote in $( git remote ); do
+    if git-remote-annex-is-ignored $remote; then
+        # For some reason git-annex still tries to pull from ignored remotes
+        opts+=( -c remote.$remote.url= )
+        echo "$remote is ignored"
+    elif git-should-ping-remote-annex $remote; then
+        if git-remote-is-up $remote; then
+            echo "$remote is up"
+        else
+            echo "$remote appears to be down; excluding"
+            opts+=(
+                -c remote.$remote.url=
+                -c remote.$remote.annex-ignore=true
+            )
+        fi
+    fi
+done
+
+echo git $opts[@] annex "$@"
+git $opts[@] annex "$@"
