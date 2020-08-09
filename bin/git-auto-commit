@@ -161,7 +161,10 @@ class GitAutoCommitter:
         return staged
 
     def auto_commit_policy(self, filepath):
-        return self.repo.get_attr(filepath, "autocommit")
+        policy = self.repo.get_attr(filepath, "autocommit")
+        if not policy or policy in ('false', 'none'):
+            return None
+        return policy
 
     def policy_min_age(self, policy, filepath):
         m = re.match(r'min-age=\+(\d+)([mshd])', policy)
