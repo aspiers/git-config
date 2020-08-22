@@ -34,7 +34,7 @@ Contents include:
 ### Management of remotes
 
 * [`git-url-rewrite`](https://github.com/aspiers/git-config/blob/master/bin/git-url-rewrite) - convenient interface for setting [git URL rewrites via `url.$url.insteadOf`](http://qa-rockstar.livejournal.com/9961.html)
-* [`git-annex-clean-sync`](https://github.com/aspiers/git-config/blob/master/bin/git-annex-clean-sync) - a wrapper around [=git annex sync=](https://git-annex.branchable.com/sync/) which avoids trying to touch ignored or unavailable remotes.
+* [`git-annex-clean-sync`](https://github.com/aspiers/git-config/blob/master/bin/git-annex-clean-sync) - a wrapper around [`git annex sync`](https://git-annex.branchable.com/sync/) which avoids trying to touch ignored or unavailable remotes.
 
 ### Mapping files/blobs back to commits
 
