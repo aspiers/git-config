@@ -6,4 +6,6 @@ if [ -z "$1" ]; then
     set -- "`git upstream`"..HEAD
 fi
 
+export FILTER_BRANCH_SQUELCH_WARNING=1
+
 git filter-branch -f --env-filter ". $here/git-rewrite-author-filter" "$@"
