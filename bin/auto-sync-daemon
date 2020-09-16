@@ -57,7 +57,15 @@ EOF
 
     # Do this at startup to allow easy checking at startup time that
     # the agent was detected correct.
-    detect_ssh_agent
+    if ! detect_ssh_agent; then
+        echo >&2 "Failed to detect ssh agent; aborting!"
+        exit 1
+    fi
+
+    if ! ssh-add -l; then
+        echo >&2 "Failed to detect identities in ssh agent; aborting!"
+        exit 1
+    fi
 
     # This was a massive PITA to get right.  It seems that if you
     # specify specific files then it will look up the inodes on
