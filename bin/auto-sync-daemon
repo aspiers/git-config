@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 BRANCH=master  # FIXME: parameterise at some point
+MAX_SLEEP=600  # limit of exponential back-off in seconds
 
 process_inotify_batch () {
     while read dir action file; do
@@ -23,6 +24,18 @@ try_sync () {
         git-annex-clean-sync
     else
         echo >&2 "WARNING: can't connect to ssh-agent; skipping annex sync"
+    fi
+}
+
+check_ssh () {
+    if ! detect_ssh_agent; then
+        echo >&2 "Failed to detect ssh agent!"
+        return 1
+    fi
+
+    if ! ssh-add -l; then
+        echo >&2 "Failed to detect identities in ssh agent!"
+        return 1
     fi
 }
 
@@ -55,26 +68,28 @@ EOF
         exit 1
     fi
 
-    # Do this at startup to allow easy checking at startup time that
-    # the agent was detected correct.
-    if ! detect_ssh_agent; then
-        echo >&2 "Failed to detect ssh agent; aborting!"
-        exit 1
-    fi
+    sleep_secs=5
 
-    if ! ssh-add -l; then
-        echo >&2 "Failed to detect identities in ssh agent; aborting!"
-        exit 1
-    fi
-
-    # This was a massive PITA to get right.  It seems that if you
-    # specify specific files then it will look up the inodes on
-    # start-up and only monitor those.  There's some similar weirdness
-    # with moves too.  Suffice to say that it's necessary to use
-    # --include and watch the whole directory.  -r is needed to catch
-    # the synced/ subdirectory too.  For more clues see
-    # https://unix.stackexchange.com/questions/164794/why-doesnt-inotifywatch-detect-changes-on-added-files
     while true; do
+        if ! check_ssh; then
+            echo >&2 "Sleeping ${sleep_secs}s ..."
+            sleep $sleep_secs
+            sleep_secs=$(( sleep_secs * 2))
+            if (( sleep_secs > MAX_SLEEP )); then
+                sleep_secs=$MAX_SLEEP
+            fi
+            continue
+        fi
+
+        # This was a massive PITA to get right.  It seems that if you
+        # specify specific files then it will look up the inodes on
+        # start-up and only monitor those.  There's some similar weirdness
+        # with moves too.  Suffice to say that it's necessary to use
+        # --include and watch the whole directory.  -r is needed to catch
+        # the synced/ subdirectory too.  For more clues see
+        # https://unix.stackexchange.com/questions/164794/why-doesnt-inotifywatch-detect-changes-on-added-files
+        #
+        # FIXME: try to switch to using http://eradman.com/entrproject/
         inotifywait \
                 -q -r \
                 --include "/($BRANCH|synced/($BRANCH|git-annex))\$" \
