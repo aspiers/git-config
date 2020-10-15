@@ -36,6 +36,47 @@ Contents include:
 * [`git-url-rewrite`](https://github.com/aspiers/git-config/blob/master/bin/git-url-rewrite) - convenient interface for setting [git URL rewrites via `url.$url.insteadOf`](http://qa-rockstar.livejournal.com/9961.html)
 * [`git-annex-clean-sync`](https://github.com/aspiers/git-config/blob/master/bin/git-annex-clean-sync) - a wrapper around [`git annex sync`](https://git-annex.branchable.com/sync/) which avoids trying to touch ignored or unavailable remotes.
 
+### Automatic committing and syncing
+
+* [`git-auto-commit`](https://github.com/aspiers/git-config/blob/master/bin/git-auto-commit) -
+  automatically commits files according to the `autocommit` [git
+  attribute](https://git-scm.com/docs/gitattributes).  For example, if
+  `.gitattributes` contains:
+
+        *.org autocommit=min-age=+5m
+
+  then any file ending in `.org` which is newly added (i.e. not in the
+  index yet) or has unstaged changes, and whose last commit time and
+  last mtime are both over 5 minutes, will be automatically staged and
+  included in an automatic commit for this invocation of the commit.
+  Files which have staged changes are assumed to be part of an
+  unfinished manual commit process, and are therefore skipped.
+
+* [`auto-commit-daemon`](https://github.com/aspiers/git-config/blob/master/bin/auto-commit-daemon) -
+  a wrapper around
+  [`git-auto-commit`](https://github.com/aspiers/git-config/blob/master/bin/git-auto-commit)
+  to run it perodically.  This can be configured as a per-user systemd
+  service, e.g. by placing the following in
+  `~/.config/systemd/user/auto-commit-my-repo.service`:
+
+        [Service]
+        ExecStart=/bin/sh -c "/path/to/auto-commit-daemon /home/me/my/repo"
+        Restart=always
+        NoNewPrivileges=true
+        SyslogIdentifier=auto-commit-my-repo
+        Environment=SLEEP=1m
+
+        [Install]
+        WantedBy=default.target
+
+* [`auto-sync-daemon`](https://github.com/aspiers/git-config/blob/master/bin/auto-sync-daemon) -
+  a wrapper around
+  [`git-annex-clean-sync`](https://github.com/aspiers/git-config/blob/master/bin/git-annex-clean-sync)
+  which runs it whenever `master` or `synced/master` or
+  `synced/git-annex` are updated.  When run across a network of remotes, it will keep
+  the `master` branch in sync across all of them.  Works well in combination with
+  setting `receive.denyCurrentBranch` to `updateInstead`.
+
 ### Mapping files/blobs back to commits
 
 * [`git-ls-dir`](https://github.com/aspiers/git-config/blob/master/bin/git-ls-dir) - list files in a git repo tree together with the commits which most recently touched them ([see a screenshot](http://stackoverflow.com/a/8774800/179332))
