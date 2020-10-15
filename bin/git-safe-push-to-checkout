@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Smarter push-to-checkout hook for when receive.denyCurrentBranch is
+# set to updateInstead.  It's near-identical to git's default
+# behaviour when no push-to-checkout hook is provided; however it
+# additionally bails if we have emacs lockfiles indicating edits in
+# progress for files which would be changed by the push-to-checkout.
+#
+# This means that push-to-checkout works more safely and doesn't rewrite
+# files which are currently being edited in emacs with unsaved changes.
+
+commit="$1"
+#echo "push-to-checkout $commit"
+
+die () {
+    echo >&2 "$*"
+    exit 1
+}
+
+if ! git cat-file -t HEAD >&/dev/null; then
+    die "No history yet"
+fi
+
+# The below is a more-or-less exact translation to shell of the C code for
+# the default behaviour for git's push-to-checkout hook defined in the
+# push_to_deploy() function in builtin/receive-pack.c
+#
+# However it additionally bails if we have emacs lockfiles indicating
+# edits in progress for files which would be changed by the push-to-checkout.
+
+
+if ! git update-index -q --ignore-submodules --refresh; then
+    die "Up-to-date check failed"
+fi
+
+if ! git diff-files --quiet --ignore-submodules --; then
+    die "Working directory has unstaged changes"
+fi
+
+# This is a rough translation of:
+#
+#    head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX
+if git cat-file -t HEAD >&/dev/null; then
+    head=HEAD
+else
+    head=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+if ! git diff-index --quiet --cached --ignore-submodules $head --; then
+    die "Working directory has staged changes"
+fi
+
+if [[ "`pwd`" == */.git ]]; then
+    # Not a bare repo; check for emacs lockfiles
+    #git diff-tree HEAD $commit --
+    cd ..
+
+    while read srcmode dstmode src dst status src dst; do
+        if [ -L ".#$src" ]; then
+            die "emacs lockfile present for $src; can't update"
+        fi
+        if [ -n "$dst" -a -L ".#$dst" ]; then
+            die "emacs lockfile present for $dst; can't update"
+        fi
+    done < <(git diff-tree HEAD $commit --)
+fi
+
+if ! git read-tree -u -m $commit; then
+    die "Could not update working tree to new HEAD"
+fi
+

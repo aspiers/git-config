@@ -73,9 +73,24 @@ Contents include:
   a wrapper around
   [`git-annex-clean-sync`](https://github.com/aspiers/git-config/blob/master/bin/git-annex-clean-sync)
   which runs it whenever `master` or `synced/master` or
-  `synced/git-annex` are updated.  When run across a network of remotes, it will keep
-  the `master` branch in sync across all of them.  Works well in combination with
-  setting `receive.denyCurrentBranch` to `updateInstead`.
+  `synced/git-annex` are updated.  When run across a network of
+  remotes, it will keep the `master` branch in sync across all of
+  them.  Works well in combination with setting
+  `receive.denyCurrentBranch` to `updateInstead`, and using
+  `git-safe-push-to-checkout` (see below) as the `push-to-checkout`
+  hook.
+
+* [`git-safe-push-to-checkout`](https://github.com/aspiers/git-config/blob/master/bin/git-safe-push-to-checkout) -
+  a smarter `push-to-checkout` hook for when `receive.denyCurrentBranch`
+  is set to `updateInstead`.  It's near-identical to git's default
+  behaviour when no `push-to-checkout` hook is provided; however it
+  additionally bails if we have emacs lockfiles indicating edits in
+  progress for files which would be changed by the push-to-checkout.
+  This means that push-to-checkout works more safely and doesn't
+  rewrite files which are currently being edited in emacs with unsaved
+  changes.  It can be installed via:
+
+    ln -s `which git-safe-push-to-checkout` $my_repo/.git/hooks/push-to-checkout
 
 ### Mapping files/blobs back to commits
 
