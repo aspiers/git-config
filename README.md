@@ -90,7 +90,7 @@ Contents include:
   rewrite files which are currently being edited in emacs with unsaved
   changes.  It can be installed via:
 
-    ln -s `which git-safe-push-to-checkout` $my_repo/.git/hooks/push-to-checkout
+        ln -s `which git-safe-push-to-checkout` $my_repo/.git/hooks/push-to-checkout
 
 ### Mapping files/blobs back to commits
 
