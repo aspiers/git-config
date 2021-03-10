@@ -134,21 +134,17 @@ class GitAutoCommitter:
         staged = 0
 
         for filepath, flags in self.process_files():
-            if not filepath.endswith(".org"):
-                # logging.debug(f"# {filepath} not an .org file")
-                continue
-
             if self.ignored(filepath):
                 logging.debug(f"# {filepath} ignored by git")
                 continue
 
             # Flags can be found here:
             # https://github.com/libgit2/pygit2/blob/320ee5e733039d4a3cc952b287498dbc5737c353/src/pygit2.c#L312-L320
-            if flags & pygit2.GIT_STATUS_WT_NEW:
-                self.stage_file(filepath, "new")
-                staged += 1
-            elif flags & pygit2.GIT_STATUS_WT_MODIFIED:
-                if self.should_commit(filepath):
+            if self.should_commit(filepath):
+                if flags & pygit2.GIT_STATUS_WT_NEW:
+                    self.stage_file(filepath, "new")
+                    staged += 1
+                elif flags & pygit2.GIT_STATUS_WT_MODIFIED:
                     self.stage_file(filepath, "changed")
                     staged += 1
 
