@@ -249,7 +249,18 @@ class GitAutoCommitter:
             os.stat(filepath).st_mtime)
         return now - last_change
 
+    def in_index(self, filepath):
+        try:
+            self.repo.index[filepath]
+            return True
+        except KeyError:
+            return False
+
     def time_since_last_commit(self, filepath):
+        if not self.in_index(filepath):
+            logging.debug("%s not in index" % filepath)
+            return datetime.timedelta(weeks=99999)
+
         descr = subprocess.check_output(
             ["git", "describe", "--always", f"HEAD:{filepath}"],
             encoding='utf-8')
