@@ -4,19 +4,24 @@
 # unavailable remotes.
 
 opts=()
+to_ignore=()
 to_ping=()
 for remote in $( git remote ); do
     if git-remote-annex-is-ignored $remote; then
         # For some reason git-annex still tries to pull from ignored remotes
+        to_ignore+=( $remote)
         opts+=( -c remote.$remote.url= )
-        echo >&2 "$remote is ignored"
     elif git-should-ping-remote-annex $remote; then
         to_ping+=( $remote )
     fi
 done
+if [[ $to_ignore ]]; then
+    echo >&2 "Ignoring remotes: $to_ignore\n"
+fi
 
 if which parallel >&/dev/null; then
-    echo >&2 "Checking liveness of remotes in parallel: $to_ping"
+    echo >&2 "Found GNU parallel!"
+    echo >&2 "Checking liveness of remotes in parallel: $to_ping\n"
     opts+=(
         $(
             echo $to_ping |
@@ -25,10 +30,13 @@ if which parallel >&/dev/null; then
         )
     )
 else
+    echo >&2 "Couldn't find GNU parallel :-("
+    echo >&2 "Checking liveness of remotes in series: $to_ping\n"
     for remote in $to_ping; do
         opts+=( $(git-down-remote-ignore-opts "$remote") )
     done
 fi
 
+echo
 echo git $opts[@] annex "$@"
 git $opts[@] annex "$@"
