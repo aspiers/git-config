@@ -20,6 +20,7 @@ git config --global sendemail.confirm always
 git config --global --bool pager.diff-tree true
 
 git config --global --bool rebase.autosquash true
+git config --global --bool pull.ff true
 
 git config --global push.default >/dev/null || \
     git config --global push.default upstream
