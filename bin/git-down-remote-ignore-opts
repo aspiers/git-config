@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ $# != 1 ]; then
+    echo >&2 "Usage: $0 <remote>"
+    exit 1
+fi
+
+remote="$1"
+
+if git remote-is-up "$remote"; then
+    echo >&2 "$remote is up"
+else
+    echo >&2 "$remote appears to be down; excluding"
+    echo \
+        -c remote."$1".url= \
+        -c remote."$1".annex-ignore=true
+fi
