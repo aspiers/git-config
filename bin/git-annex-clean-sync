@@ -3,4 +3,4 @@
 # Run git annex sync while avoiding trying to touch ignored or
 # unavailable remotes.
 
-git-annex-clean sync
+git-annex-clean sync "$@"
