@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export GIT_AUTHOR_DATE="$1"
+export GIT_COMMITTER_DATE="$1"
+
+git commit --amend --no-edit --reset-author
