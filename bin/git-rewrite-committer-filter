@@ -15,13 +15,15 @@ Or, just set user.email:
 
   git config user.email x@adamspiers.org
 
+You can also optionally export GIT_NEW_COMMITTER_NAME.
+
 Aborting.
 EOF
     exit 1
 fi
 
 if [ "$GIT_COMMITTER_NAME" = "Adam Spiers" ]; then
-    #GIT_COMMITTER_NAME="Adam Spiers"
+    GIT_COMMITTER_NAME="${GIT_NEW_COMMITTER_NAME:-Adam Spiers}"
     GIT_COMMITTER_EMAIL="$GIT_NEW_COMMITTER_EMAIL"
     #export GIT_COMMITTER_DATE="<New Date>"
 # else
