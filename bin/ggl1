@@ -23,6 +23,6 @@ LESS="$LESS -S"
 
 . $ZDOTDIR/.shared_rc.d/git-pager
 
-exec git log --color --decorate --abbrev-commit --date=relative \
-    --pretty=tformat:"%Cred%h%Creset -$dec %s %Cgreen(%cr)%Creset" \
+exec git log --color --decorate --abbrev-commit \
+    --pretty=tformat:"%Cred%h%Creset -$dec %s %Cgreen(%cd)%Creset" \
     "$@"

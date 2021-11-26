@@ -8,5 +8,6 @@ export GIT_PAGER_MODE=default
 . $ZDOTDIR/.shared_rc.d/git-pager
 
 ref="${1:-HEAD}"
+shift
 
-exec git log --color --decorate -g --abbrev-commit --pretty=oneline "$ref"
+exec git log --color --decorate -g --abbrev-commit --pretty=oneline "$ref" "$@"

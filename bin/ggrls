@@ -7,4 +7,4 @@ fi
 ref="${1:-HEAD}"
 shift
 
-exec ggl -g --abbrev-commit "$ref@{now}" "$@"
+exec ggl -g --abbrev-commit --stat "$ref@{now}" "$@"
