@@ -94,7 +94,7 @@ process_line () {
 
 process_arbitrary_git_command () {
     echo "git ${args[*]}"
-    
+
     if ! git "${args[@]}"; then
         had_issues=y
         echo "git ${args[*]} failed"
@@ -134,7 +134,7 @@ rebase_until_success () {
     had_issues=
     if ! git rebase $interactive "${args[@]}"; then
         had_issues=y
-        while [ -e "$root/.git/rebase-apply" ]; do
+        while [ -e "$root/.git/rebase-apply" ] || [ -d "$root/.git/rebase-merge" ]; do
             echo
             echo "git rebase ${args[@]} not completed."
             echo "Please fix via git rebase --continue / --abort then exit shell."
