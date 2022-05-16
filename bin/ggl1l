@@ -1,3 +1,28 @@
 #!/bin/bash
 
-exec git log --pretty=oneline "$@"
+# http://www.jukie.net/~bart/blog/pimping-out-git-log
+# Thanks Bart ;-)
+
+me=`basename $0`
+
+version="`git --version | awk '{print \$3}'`"
+case "$version" in
+    1.[0-5].*|1.6.0.*) dec="" ;;
+    1.6.[2-9].*|1.[7-9].*|2.*) dec="%C(yellow)%d%Creset" ;;
+    *)
+        echo "FIXME: add support for git $version to $me" >&2
+        exit 1
+        ;;
+esac
+
+LESS="$LESS -S"
+
+# FIXME: why was this here? We want to default to a pager when
+# this command is called directly.
+#: ${GIT_PAGER_MODE:=none}
+
+. $ZDOTDIR/.shared_rc.d/git-pager
+
+exec git log --color --decorate --abbrev-commit \
+    --pretty=tformat:"%Cred%h%Creset -$dec %s %Cgreen(%cd)%Creset" \
+    "$@"
