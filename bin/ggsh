@@ -27,7 +27,7 @@ case "$type" in
         fi
         ;;
 esac
-        
+
 . $ZDOTDIR/.shared_rc.d/git-pager
 
 #echo git show "$@"
