@@ -48,3 +48,13 @@ git config --global diff.schelp.xfuncname \
 #git config --global url."https://".insteadOf git://
 
 git config --global credential.helper 'cache --timeout=3600'
+
+if which delta >&/dev/null; then
+    # git config --global core.pager delta
+    git config --global interactive.diffFilter 'delta --color-only'
+    git config --global delta.light false
+    git config --global delta.navigate true
+    git config --global delta.side-by-side true
+    git config --global delta.line-numbers true
+    git config --global diff.colorMoved default
+fi

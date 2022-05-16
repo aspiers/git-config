@@ -4,7 +4,14 @@ export GIT_PAGER="less $LESS -F -S"
 
 GIT_PAGER="${GIT_PAGER/ -j[0-9] / }"
 GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
-GIT_PAGER="${GIT_PAGER/-a / }"
+# GIT_PAGER="${GIT_PAGER/-a / }"
+
+if which delta >&/dev/null; then
+    export DELTA_PAGER="$GIT_PAGER"
+    echo $DELTA_PAGER
+    unset GIT_PAGER
+    return
+fi
 
 git_diff_highlight=
 
