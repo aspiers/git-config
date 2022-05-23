@@ -277,9 +277,9 @@ class GitAutoCommitter:
 
 def parse_args():
     descr = "\n".join(wrap(dedent("""\
-        Automatically commit .org files last modified or committed
-        before a certain age.  Doesn't do anything if any change
-        is already staged in git's index.
+        Automatically commit files according to the policy defined
+        in their autocommit attribute.  Doesn't do anything if any
+        change is already staged in git's index.
     """), width=int(os.getenv("COLUMNS", "70"))))
 
     parser = argparse.ArgumentParser(
