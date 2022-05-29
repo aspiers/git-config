@@ -25,6 +25,10 @@ git config --global        pull.ff only
 git config --global push.default >/dev/null || \
     git config --global push.default upstream
 
+# tarsius recommends "always" as the sensible default, not "true":
+# https://github.com/magit/magit/issues/4508#issuecomment-923177662
+git config --global branch.autoSetupMerge always
+
 git config --global --bool merge.defaultToUpstream true
 git config --global        merge.conflictStyle diff3
 git config --global        core.attributesfile ~/.gitattributes
