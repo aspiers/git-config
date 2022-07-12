@@ -24,6 +24,7 @@ git config --global        pull.ff only
 
 git config --global push.default >/dev/null || \
     git config --global push.default upstream
+git config --global remote.pushDefault github
 
 # tarsius recommends "always" as the sensible default, not "true":
 # https://github.com/magit/magit/issues/4508#issuecomment-923177662
