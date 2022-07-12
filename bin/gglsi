@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# List ignored files
+
+exec gglsu --ignored "$@"
