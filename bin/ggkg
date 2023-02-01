@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# Set gitk geometry
+
+declare -A GEOMETRIES=(
+    ionian '1385x844+456+163 238 179'
+    aegean '2902x1834+442+78 446 333'
+)
+
+. $ZDOTDIR/lib/libhost.sh
+read_localhost_nickname
+
+if [ -z "${GEOMETRIES[$localhost_nickname]}" ]; then
+    echo >&2 "No gitk geometry found for $localhost_nickname; aborting."
+    exit 1
+fi
+
+echo git config gui.geometry "${GEOMETRIES[$localhost_nickname]}"
+git config gui.geometry "${GEOMETRIES[$localhost_nickname]}"
