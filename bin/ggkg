@@ -15,5 +15,9 @@ if [ -z "${GEOMETRIES[$localhost_nickname]}" ]; then
     exit 1
 fi
 
-echo git config gui.geometry "${GEOMETRIES[$localhost_nickname]}"
-git config gui.geometry "${GEOMETRIES[$localhost_nickname]}"
+echo git config --global gui.geometry "${GEOMETRIES[$localhost_nickname]}"
+git config --global gui.geometry "${GEOMETRIES[$localhost_nickname]}"
+
+echo git config --local --unset gui.geometry
+git config --local --unset gui.geometry
+
