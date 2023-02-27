@@ -23,4 +23,25 @@ git config --local --unset gui.geometry
 
 # https://github.com/prati0100/git-gui/issues/29#issuecomment-1204650745
 git config --global gui.usettk 0
- 
+
+xrdb_dpi="$( xrdb -get Xft.dpi )"
+case "$xrdb_dpi" in
+    96)
+        git_font_size=11
+        ;;
+    128)
+        git_font_size=10
+        ;;
+    192)
+        git_font_size=9
+        ;;
+    *)
+        echo >&2 "Don't know what git gui font size to set for dpi $xrdb_dpi"
+        ;;
+esac
+
+if [ -n "$xrdb_dpi" ]; then
+    echo "Setting git gui font size to $git_font_size for $xrdb_dpi"
+    git config --global gui.fontui "-family Roboto -size $git_font_size -weight normal -slant roman -underline 0 -overstrike 0"
+    git config --global gui.fontdiff "-family \"Source Code Pro\"  -size $git_font_size -weight normal -slant roman -underline 0 -overstrike 0"
+fi
