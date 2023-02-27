@@ -5,6 +5,7 @@
 declare -A GEOMETRIES=(
     ionian '1385x844+456+163 238 179'
     aegean '2902x1834+442+78 446 333'
+    celtic '2000x1300+42+78 446 333'
 )
 
 . $ZDOTDIR/lib/libhost.sh
