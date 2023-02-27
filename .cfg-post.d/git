@@ -9,12 +9,11 @@ if which zsh >&/dev/null; then
   zsh -c zrec
 fi
 
+ggkg
+
 git config --global color.ui auto
 git config --global color.pager true
 git config --global color.diff auto
-
-# https://github.com/prati0100/git-gui/issues/29#issuecomment-1204650745
-git config --global gui.usettk 0
 
 git config --global sendemail.confirm always
 
