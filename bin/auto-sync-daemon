@@ -5,11 +5,13 @@ MAX_SLEEP=600  # limit of exponential back-off in seconds
 
 process_inotify_batch () {
     while read dir action file; do
+        # echo >&2 "inotifywait: dir=$dir action=$action file=$file"
         try_sync
 
         # This should not be unnecessary since we are relying on inotifywait
         # to only return a single event; the filtering is done by that
         # process, not this loop.
+        # echo >&2 "inotifywait: break"
         break
     done
 }
