@@ -17,7 +17,7 @@ process_inotify_batch () {
 }
 
 try_sync () {
-    if detect_ssh_agent; then
+    if check_ssh; then
         # Do a sync regardless of whether auto-commit did anything,
         # because another remote may have pushed changes to our
         # synced/master branch.  First give other remotes a chance
@@ -30,6 +30,11 @@ try_sync () {
 }
 
 check_ssh () {
+    if ! git remote -v | grep -q ssh; then
+        echo >&2 "No ssh remotes; skipping ssh agent check".
+        return 0
+    fi
+
     if ! detect_ssh_agent; then
         echo >&2 "Failed to detect ssh agent!"
         return 1
