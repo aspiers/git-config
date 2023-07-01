@@ -18,6 +18,32 @@ process_inotify_batch () {
 
 try_sync () {
     if check_ssh; then
+        # Skip sync if we found lockfiles which indicate that
+        # performing a git-annex sync might be problematic due to
+        # unsaved local changes.
+        #
+        # Unfortunately there is no easy way to add a check for lock
+        # files based on which files the pending git merge run by
+        # git-annex would change, because there isn't a git hook which
+        # runs right at the beginning of the merge:
+        #
+        # https://stackoverflow.com/questions/76596057/how-to-implement-custom-checks-before-starting-a-git-merge
+        #
+        # So instead we have to do a wider blanket check for lock
+        # files corresponding to files which would be changed by the
+        # sync are currently being edited.  This is better than
+        # checking when *any* files in the repo are being edited,
+        # but it's still overkill relative to what we could do if
+        # there was a pre-merge git hook.
+        locked=$(
+            git config -z --get-all auto-sync.lockfile |
+                xargs -0 gglsi
+        )
+        if [ -n "$locked" ]; then
+            echo >&2 "Skipping annex sync; found lock files: $locked"
+            return
+        fi
+
         # Do a sync regardless of whether auto-commit did anything,
         # because another remote may have pushed changes to our
         # synced/master branch.  First give other remotes a chance
