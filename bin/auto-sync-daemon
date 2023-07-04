@@ -37,7 +37,7 @@ try_sync () {
         # there was a pre-merge git hook.
         locked=$(
             git config -z --get-all auto-sync.lockfile |
-                xargs -0 gglsi
+                xargs -0 -r gglsi
         )
         if [ -n "$locked" ]; then
             echo >&2 "Skipping annex sync; found lock files: $locked"
