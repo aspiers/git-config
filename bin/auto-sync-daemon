@@ -35,10 +35,10 @@ try_sync () {
         # checking when *any* files in the repo are being edited,
         # but it's still overkill relative to what we could do if
         # there was a pre-merge git hook.
-        locked=$(
-            git config -z --get-all auto-sync.lockfile |
-                xargs -0 -r gglsi
-        )
+        tmp="$(mktemp --tmpdir auto-sync.lockfiles.XXXXXXX)"
+        git config -z --get-all auto-sync.lockfile > "$tmp"
+        locked=$(git ls-files --other --ignored -X "$tmp")
+        rm "$tmp"
         if [ -n "$locked" ]; then
             echo >&2 "Skipping annex sync; found lock files: $locked"
             return

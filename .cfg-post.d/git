@@ -33,6 +33,7 @@ git config --global remote.pushDefault github
 git config --global branch.autoSetupMerge always
 
 git config --global --bool merge.defaultToUpstream true
+git config --global        merge.tool kdiff3
 git config --global        merge.conflictStyle diff3
 git config --global        core.attributesfile ~/.gitattributes
 git config --global        core.excludesfile ~/.gitignore
