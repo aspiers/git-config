@@ -114,6 +114,10 @@ EOF
             continue
         fi
 
+        # Maximum time to wait for an update before syncing.
+        max_wait=$( git config --default 360 auto-sync.max-wait )
+        echo "Waiting up to $max_wait minutes for an update to $BRANCH branch ..."
+
         # This was a massive PITA to get right.  It seems that if you
         # specify specific files then it will look up the inodes on
         # start-up and only monitor those.  There's some similar weirdness
@@ -127,8 +131,13 @@ EOF
                 -q -r \
                 --include "/($BRANCH|synced/($BRANCH|git-annex))\$" \
                 -e create -e modify -e move -e delete \
+                -t $(( max_wait * 60 )) \
                 "$git_dir/refs/heads" |
             process_inotify_batch
+        if (( pipestatus[1] == 2 )); then
+            echo "Timed out waiting $max_wait minutes for update; syncing now ..."
+            try_sync
+        fi
     done
 }
 
