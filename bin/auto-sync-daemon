@@ -1,7 +1,6 @@
 #!/usr/bin/env zsh
 
-BRANCH=master  # FIXME: parameterise at some point
-MAX_SLEEP=600  # limit of exponential back-off in seconds
+BRANCH=$( git config --default master auto-sync.branch )
 
 process_inotify_batch () {
     while read dir action file; do
@@ -104,12 +103,15 @@ EOF
     sleep_secs=5
 
     while true; do
+        # limit of exponential back-off in seconds
+        max_sleep=$( git config --default 600 auto-sync.max-sleep )
+
         if ! check_ssh; then
             echo >&2 "Sleeping ${sleep_secs}s ..."
             sleep $sleep_secs
             sleep_secs=$(( sleep_secs * 2))
-            if (( sleep_secs > MAX_SLEEP )); then
-                sleep_secs=$MAX_SLEEP
+            if (( sleep_secs > max_sleep )); then
+                sleep_secs=$max_sleep
             fi
             continue
         fi
