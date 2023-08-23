@@ -14,3 +14,4 @@
 *.sc       diff=sclang
 *.scd      diff=sclang
 *.schelp   diff=schelp
+*.sol      diff=solidity
