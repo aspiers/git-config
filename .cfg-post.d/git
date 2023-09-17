@@ -11,6 +11,10 @@ fi
 
 ggkg
 
+# https://github.blog/2022-06-29-improve-git-monorepo-performance-with-a-file-system-monitor/
+git config --global core.fsmonitor true
+git config --global core.untrackedcache true
+
 git config --global color.ui auto
 git config --global color.pager true
 git config --global color.diff auto
