@@ -1,3 +1,5 @@
 #!/bin/bash
 
+# See also ggans => git-annex-clean-sync
+
 exec git annex sync "$@"
