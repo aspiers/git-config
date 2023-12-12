@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+# See also:
+#   - https://github.com/gitwatch/gitwatch
 
 import argparse
 import datetime
