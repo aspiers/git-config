@@ -64,6 +64,8 @@ git config --global diff.solidity.xfuncname \
 
 git config --global credential.helper 'cache --timeout=3600'
 
+git config --global init.defaultBranch main
+
 if which delta >&/dev/null; then
     # git config --global core.pager delta
     git config --global interactive.diffFilter 'delta --color-only'
