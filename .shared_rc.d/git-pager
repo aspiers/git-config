@@ -8,9 +8,6 @@ GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
 
 if which difft >&/dev/null; then
     export GIT_EXTERNAL_DIFF=difft
-    # FIXME
-    #git_pager_regexp=' --- [0-9]+/[0-9]+ ---'
-    #unset GIT_PAGER
 elif which delta >&/dev/null; then
     export DELTA_PAGER="$GIT_PAGER"
     unset GIT_PAGER
@@ -26,7 +23,11 @@ case "$GIT_PAGER_MODE" in
         ;;
     diff)
         # ggsh could be showing a merge commit
-        git_pager_regexp='^(diff|commit) .*'
+        if [ "$GIT_EXTERNAL_DIFF" == difft ]; then
+            git_pager_regexp=' --- [0-9]+/[0-9]+ ---'
+        else
+            git_pager_regexp='^(diff|commit) .*'
+        fi
         git_diff_highlight=y
         ;;
     commit)
