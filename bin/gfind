@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Like find(1), but only lists files tracked by git.
+# Excludes files only in the index; if you want those,
+# see ggls which is a shortcut for git ls-files.
 
 if [ $# -eq 0 ] || ! git rev-parse --verify "$1" >/dev/null 2>&1; then
     treeish=HEAD
