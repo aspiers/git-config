@@ -41,6 +41,7 @@ Build
 *.cfgsave.*
 autom4te.cache
 .hg
+.git
 .directory
 .autosync.log
 .autosync.pid
