@@ -66,6 +66,13 @@ git config --global credential.helper 'cache --timeout=3600'
 
 git config --global init.defaultBranch main
 
+if which difft >&/dev/null; then
+    # git config --global diff.tool difftastic
+    git config --global difftool.prompt false
+    git config --global difftool.difftastic.cmd difft "$LOCAL" "$REMOTE"
+    git config --global pager.difftool true
+fi
+
 if which delta >&/dev/null; then
     # git config --global core.pager delta
     git config --global interactive.diffFilter 'delta --color-only'
