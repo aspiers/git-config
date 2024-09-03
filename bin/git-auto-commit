@@ -104,7 +104,7 @@ class GitAutoCommitter:
             abort("user.email is not set in git config; aborting!")
 
     def manual_attention_required(self):
-        found_issues = False
+        found_issues = []
         for filepath, flags in self.process_files():
             if self.ignored(filepath):
                 # logging.debug(f"# {filepath} ignored by git")
@@ -117,10 +117,10 @@ class GitAutoCommitter:
             st = get_status_output(flags)
             if file_is_staged(flags):
                 logging.debug(f"{st} {filepath}\t\t<-- staged")
-                found_issues = True
+                found_issues.append(f"{filepath} was staged")
             elif file_is_conflicted(flags):
                 logging.debug(f"{st} {filepath}\t\t<-- conflicted")
-                found_issues = True
+                found_issues.append(f"{filepath} had conflicts")
             else:
                 logging.debug(f"{st} {filepath}")
 
@@ -308,8 +308,12 @@ def main():
 
     gac = GitAutoCommitter(options.repo_path)
 
-    if gac.manual_attention_required():
-        abort("Manual attention required; aborting.")
+    issues = gac.manual_attention_required()
+    if issues:
+        logging.error("Manual attention required:")
+        for issue in issues:
+            logging.error(f"   {issue}")
+        sys.exit(1)
 
     logging.debug("")
     gac.auto_commit_changes()
