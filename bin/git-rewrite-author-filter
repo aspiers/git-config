@@ -22,7 +22,7 @@ EOF
     exit 1
 fi
 
-if [ "$GIT_AUTHOR_NAME" = "Adam Spiers" ] || [ "$GIT_AUTHOR_NAME" = "adam" ]; then
+if [ "$GIT_AUTHOR_NAME" = "${GIT_OLD_AUTHOR_NAME:-Adam Spiers}" ]; then
     GIT_AUTHOR_NAME="${GIT_NEW_AUTHOR_NAME:-Adam Spiers}"
     GIT_AUTHOR_EMAIL="$GIT_NEW_AUTHOR_EMAIL"
     #GIT_AUTHOR_DATE="<New Date>"

@@ -21,10 +21,10 @@ Aborting.
 EOF
     exit 1
 fi
-
-if [ "$GIT_COMMITTER_NAME" = "Adam Spiers" ]; then
+if [ "$GIT_COMMITTER_NAME" = "${GIT_OLD_COMMITTER_NAME:-Adam Spiers}" ]; then
     GIT_COMMITTER_NAME="${GIT_NEW_COMMITTER_NAME:-Adam Spiers}"
     GIT_COMMITTER_EMAIL="$GIT_NEW_COMMITTER_EMAIL"
+    echo $GIT_NEW_COMMITTER_EMAIL
     #export GIT_COMMITTER_DATE="<New Date>"
 # else
 #     echo "\$GIT_COMMITTER_NAME was $GIT_COMMITTER_NAME" >&2
