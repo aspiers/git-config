@@ -13,7 +13,7 @@ repo_is_clean () {
     # "clean" == nothing to do except maybe commit untracked files
     # which would not be harmed by any git operations except git clean -f,
     # which we won't be doing here!
-    [ -z "`git status --porcelain | egrep -v '^\?\?'`" ]
+    [ -z "`git status --porcelain | grep -Ev '^\?\?'`" ]
 }
 
 commit_local_changes () {
@@ -27,7 +27,7 @@ commit_local_changes () {
 
     if ! is_interactive; then
         if repo_is_clean; then
-            : # we can still safely proceed with push/pull 
+            : # we can still safely proceed with push/pull
             return 0
         else
             echo "Repo has uncommitted changes."
@@ -68,7 +68,7 @@ EOF
     fi
 
     if ! upstream=`git upstream 2>/dev/null`; then
-        echo 
+        echo
         echo "Upstream still not set for $head." >&2
         return 1
     fi
@@ -150,7 +150,7 @@ safe_merge_with_upstream_batch () {
 
     git merge --no-commit --no-ff "$upstream"
     status=$?
-    if git status --porcelain | egrep '^(U|.U)'; then
+    if git status --porcelain | grep -E '^(U|.U)'; then
         [ "$status" = 0 ] && error "git merge --no-commit succeeded with unmerged files?!"
         echo
         echo "In non-interactive mode; aborted merge."

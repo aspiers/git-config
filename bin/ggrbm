@@ -171,7 +171,7 @@ main () {
     orig_head=`git head`
 
     exec 3>&0 # save STDIN tty
-    egrep -v '^ *(#|$)' "$conf" | while read -a args; do
+    grep -Ev '^ *(#|$)' "$conf" | while read -a args; do
         process_line
     done
 
