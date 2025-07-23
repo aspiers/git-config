@@ -272,7 +272,7 @@ class GitAutoCommitter:
         tree = self.repo.index.write_tree()
         head_oid = self.repo.head.resolve().target
         host = get_hostname()
-        script_path = __file__.replace(os.path.expanduser("~"), "~")
+        script_path = sys.argv[0].replace(os.path.expanduser("~"), "~")
 
         staged_files = self.get_staged_files()
         files_summary = self.format_files_for_message(staged_files, host, script_path)
