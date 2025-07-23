@@ -7,7 +7,7 @@ GIT_PAGER="${GIT_PAGER/ -j[0-9][0-9] / }"
 # GIT_PAGER="${GIT_PAGER/-a / }"
 
 if which difft >&/dev/null; then
-    export GIT_EXTERNAL_DIFF=difft
+    export GIT_EXTERNAL_DIFF="difft --display inline"
 elif which delta >&/dev/null; then
     export DELTA_PAGER="$GIT_PAGER"
     unset GIT_PAGER
