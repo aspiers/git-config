@@ -306,10 +306,14 @@ class GitAutoCommitter:
         return False
 
     def time_since_mtime(self, filepath):
-        now = datetime.datetime.now()
-        last_change = datetime.datetime.fromtimestamp(
-            os.stat(filepath).st_mtime)
-        return now - last_change
+        try:
+            now = datetime.datetime.now()
+            last_change = datetime.datetime.fromtimestamp(
+                os.stat(filepath).st_mtime)
+            return now - last_change
+        except FileNotFoundError:
+            # File was deleted, return a very large age so it won't be committed
+            return datetime.timedelta(weeks=99999)
 
     def in_index(self, filepath):
         try:
