@@ -224,7 +224,8 @@ class GitAutoCommitter:
         tree = self.repo.index.write_tree()
         head_oid = self.repo.head.resolve().target
         host = get_hostname()
-        message = f"auto-commit on {host} by {__file__}"
+        script_path = __file__.replace(os.path.expanduser("~"), "~")
+        message = f"auto-commit on {host} by {script_path}"
         oid = self.repo.create_commit( # noqa
             "refs/heads/master", author, committer, message, tree,
             [head_oid]  # parent commit(s)
