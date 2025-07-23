@@ -213,11 +213,11 @@ class GitAutoCommitter:
             return None
 
     def create_commit_header(self, files_summary, host):
-        return f"auto-commit {files_summary} on {host}"
+        return f"auto-commit[{host}]: {files_summary}"
 
     def create_commit_message(self, files_summary, host, script_path):
         header = self.create_commit_header(files_summary, host)
-        body = f"by {script_path}"
+        body = f"Done by {script_path}"
         return f"{header}\n\n{body}"
 
     def get_staged_files(self):
@@ -280,7 +280,10 @@ class GitAutoCommitter:
             print("Files that would be staged:")
             for filepath in staged_files:
                 print(f"  {filepath}")
-            print(f"Would commit with message: {message}")
+            print(f"\nWould commit with message:")
+            print("-" * 78)
+            print(message)
+            print("-" * 78)
         else:
             oid = self.repo.create_commit( # noqa
                 "refs/heads/master", author, committer, message, tree,
