@@ -94,6 +94,7 @@ class GitAutoCommitter:
     def __init__(self, repo_path, dry_run=False):
         self.repo_path = repo_path
         self.dry_run = dry_run
+        self.staged_files_this_session = []
         logging.debug("GitAutoCommitter on repo %s" % self.repo_path)
         self.repo = pygit2.Repository(repo_path)
         self.check_config()
@@ -215,15 +216,7 @@ class GitAutoCommitter:
         return f"auto-commit {files_summary} on {host} by {script_path}"
 
     def get_staged_files(self):
-        if self.dry_run:
-            # In dry-run mode, we need to get the files that would be staged
-            staged_files = []
-            for filepath, flags in self.process_files():
-                if not self.ignored(filepath) and self.should_commit(filepath):
-                    staged_files.append(filepath)
-            return staged_files
-        else:
-            return [path for path in self.repo.index]
+        return self.staged_files_this_session
 
     def format_files_for_message(self, staged_files, host, script_path):
         if not staged_files:
@@ -342,6 +335,7 @@ class GitAutoCommitter:
         else:
             logging.debug(f"%-20s {filepath}" % f"Staged {reason} file:")
             self.repo.index.add(filepath)
+        self.staged_files_this_session.append(filepath)
 
 
 def parse_args():
