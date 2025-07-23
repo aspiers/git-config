@@ -54,3 +54,4 @@ build-tmp/
 .*.swp
 .mypy_cache/
 .log/
+/.stfolder/
