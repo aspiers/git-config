@@ -91,8 +91,9 @@ def abort(msg):
 
 
 class GitAutoCommitter:
-    def __init__(self, repo_path):
+    def __init__(self, repo_path, dry_run=False):
         self.repo_path = repo_path
+        self.dry_run = dry_run
         logging.debug("GitAutoCommitter on repo %s" % self.repo_path)
         self.repo = pygit2.Repository(repo_path)
         self.check_config()
@@ -155,7 +156,7 @@ class GitAutoCommitter:
             #     fl = " ".join(get_status_flags(flags))
             #     logging.debug(f"Not staging {filepath} with flags {fl}")
 
-        if staged > 0:
+        if staged > 0 and not self.dry_run:
             self.repo.index.write()
         return staged
 
@@ -213,6 +214,17 @@ class GitAutoCommitter:
     def create_commit_message(self, files_summary, host, script_path):
         return f"auto-commit {files_summary} on {host} by {script_path}"
 
+    def get_staged_files(self):
+        if self.dry_run:
+            # In dry-run mode, we need to get the files that would be staged
+            staged_files = []
+            for filepath, flags in self.process_files():
+                if not self.ignored(filepath) and self.should_commit(filepath):
+                    staged_files.append(filepath)
+            return staged_files
+        else:
+            return [path for path in self.repo.index]
+
     def format_files_for_message(self, staged_files, host, script_path):
         if not staged_files:
             return ""
@@ -262,18 +274,24 @@ class GitAutoCommitter:
         host = get_hostname()
         script_path = __file__.replace(os.path.expanduser("~"), "~")
 
-        # Get staged files for commit message
-        staged_files = [path for path in self.repo.index]
+        staged_files = self.get_staged_files()
         files_summary = self.format_files_for_message(staged_files, host, script_path)
         message = self.create_commit_message(files_summary, host, script_path)
-        oid = self.repo.create_commit( # noqa
-            "refs/heads/master", author, committer, message, tree,
-            [head_oid]  # parent commit(s)
-        )
-        # commit = self.repo.get(oid)
-        # logging.debug(f"\n{commit.short_id} {message}")
-        logging.debug("")
-        subprocess.call(["git", "show", "--format=fuller", "--name-status"])
+
+        if self.dry_run:
+            print("Files that would be staged:")
+            for filepath in staged_files:
+                print(f"  {filepath}")
+            print(f"Would commit with message: {message}")
+        else:
+            oid = self.repo.create_commit( # noqa
+                "refs/heads/master", author, committer, message, tree,
+                [head_oid]  # parent commit(s)
+            )
+            # commit = self.repo.get(oid)
+            # logging.debug(f"\n{commit.short_id} {message}")
+            logging.debug("")
+            subprocess.call(["git", "show", "--format=fuller", "--name-status"])
 
     def process_files(self):
         for filepath, flags in self.repo.status().items():
@@ -315,8 +333,11 @@ class GitAutoCommitter:
         return now - last_change
 
     def stage_file(self, filepath, reason):
-        logging.debug(f"%-20s {filepath}" % f"Staged {reason} file:")
-        self.repo.index.add(filepath)
+        if self.dry_run:
+            logging.debug(f"%-20s {filepath}" % f"Would stage {reason} file:")
+        else:
+            logging.debug(f"%-20s {filepath}" % f"Staged {reason} file:")
+            self.repo.index.add(filepath)
 
 
 def parse_args():
@@ -335,6 +356,10 @@ def parse_args():
         help="Enable debug output"
     )
     parser.add_argument(
+        "-n", "--dry-run", action="store_true",
+        help="Show what would be done without making changes"
+    )
+    parser.add_argument(
         "repo_path", metavar="REPO-PATH", nargs="?",
         default=".", help="Path to repository to auto-commit"
     )
@@ -347,7 +372,7 @@ def main():
     if options.debug:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    gac = GitAutoCommitter(options.repo_path)
+    gac = GitAutoCommitter(options.repo_path, options.dry_run)
 
     issues = gac.manual_attention_required()
     if issues:
