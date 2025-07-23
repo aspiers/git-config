@@ -223,6 +223,45 @@ class GitAutoCommitter:
     def get_staged_files(self):
         return self.staged_files_this_session
 
+    def try_brace_expansion(self, files):
+        """Try to condense files with common prefix/suffix into brace expansion format."""
+        if len(files) < 2:
+            return files
+
+        # Group files by (directory, extension)
+        groups = {}
+        for filepath in files:
+            dirname = os.path.dirname(filepath)
+            basename = os.path.basename(filepath)
+            if '.' in basename:
+                name, ext = os.path.splitext(basename)
+                key = (dirname, ext)
+                if key not in groups:
+                    groups[key] = []
+                groups[key].append((filepath, name))
+            else:
+                # Files without extension, can't group
+                groups[('ungrouped', filepath)] = [(filepath, filepath)]
+
+        result = []
+        for (dirname, ext), file_list in groups.items():
+            if ext == 'ungrouped':
+                # Add ungrouped files as-is
+                result.extend([filepath for filepath, _ in file_list])
+            elif len(file_list) == 1:
+                # Single file in group, add as-is
+                result.append(file_list[0][0])
+            else:
+                # Multiple files with same dir/ext, try brace expansion
+                names = [name for _, name in file_list]
+                if dirname:
+                    expanded = f"{dirname}/{{{','.join(names)}}}{ext}"
+                else:
+                    expanded = f"{{{','.join(names)}}}{ext}"
+                result.append(expanded)
+
+        return result
+
     def format_files_for_message(self, staged_files, host, script_path):
         if not staged_files:
             return ""
@@ -242,7 +281,13 @@ class GitAutoCommitter:
                 # Truncate with ellipsis
                 return file[:available_space-3] + "..."
 
-        # Multiple files - try to fit as many as possible
+        # Multiple files - try brace expansion first
+        brace_expanded = self.try_brace_expansion(sorted_files)
+        brace_str = ", ".join(brace_expanded)
+        if len(brace_str) <= available_space:
+            return brace_str
+
+        # Try to fit as many as possible without brace expansion
         files_str = ", ".join(sorted_files)
         if len(files_str) <= available_space:
             return files_str
