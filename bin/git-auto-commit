@@ -212,8 +212,13 @@ class GitAutoCommitter:
         except KeyError:
             return None
 
+    def create_commit_header(self, files_summary, host):
+        return f"auto-commit {files_summary} on {host}"
+
     def create_commit_message(self, files_summary, host, script_path):
-        return f"auto-commit {files_summary} on {host} by {script_path}"
+        header = self.create_commit_header(files_summary, host)
+        body = f"by {script_path}"
+        return f"{header}\n\n{body}"
 
     def get_staged_files(self):
         return self.staged_files_this_session
@@ -222,9 +227,9 @@ class GitAutoCommitter:
         if not staged_files:
             return ""
 
-        # Calculate available space by using the actual message template
-        base_msg_len = len(self.create_commit_message("", host, script_path))
-        available_space = 78 - base_msg_len
+        # Calculate available space for header only (78 char limit for first line)
+        header_without_files = self.create_commit_header("", host)
+        available_space = 78 - len(header_without_files)
 
         # Sort files by length to prioritize shorter names
         sorted_files = sorted(staged_files, key=len)
