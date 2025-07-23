@@ -210,6 +210,42 @@ class GitAutoCommitter:
         except KeyError:
             return None
 
+    def create_commit_message(self, files_summary, host, script_path):
+        return f"auto-commit {files_summary} on {host} by {script_path}"
+
+    def format_files_for_message(self, staged_files, host, script_path):
+        if not staged_files:
+            return ""
+
+        # Calculate available space by using the actual message template
+        base_msg_len = len(self.create_commit_message("", host, script_path))
+        available_space = 78 - base_msg_len
+
+        # Sort files by length to prioritize shorter names
+        sorted_files = sorted(staged_files, key=len)
+
+        if len(sorted_files) == 1:
+            file = sorted_files[0]
+            if len(file) <= available_space:
+                return file
+            else:
+                # Truncate with ellipsis
+                return file[:available_space-3] + "..."
+
+        # Multiple files - try to fit as many as possible
+        files_str = ", ".join(sorted_files)
+        if len(files_str) <= available_space:
+            return files_str
+
+        # Try with just filenames (no directories)
+        short_names = [os.path.basename(f) for f in sorted_files]
+        short_str = ", ".join(short_names)
+        if len(short_str) <= available_space:
+            return short_str
+
+        # Use count if too many files
+        return f"{len(sorted_files)} files"
+
     def commit_changes(self):
         author = pygit2.Signature(
             self.repo.config["user.name"],
@@ -225,7 +261,11 @@ class GitAutoCommitter:
         head_oid = self.repo.head.resolve().target
         host = get_hostname()
         script_path = __file__.replace(os.path.expanduser("~"), "~")
-        message = f"auto-commit on {host} by {script_path}"
+
+        # Get staged files for commit message
+        staged_files = [path for path in self.repo.index]
+        files_summary = self.format_files_for_message(staged_files, host, script_path)
+        message = self.create_commit_message(files_summary, host, script_path)
         oid = self.repo.create_commit( # noqa
             "refs/heads/master", author, committer, message, tree,
             [head_oid]  # parent commit(s)
