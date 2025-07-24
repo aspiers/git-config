@@ -52,4 +52,17 @@ config\.log
 autom4te\.cache
 .*\.log
 README.*
+LICENSE.*
 COPYING
+\.autosync
+\.autocommit
+\.mypy_cache
+\.env
+\.env\..*
+\.cursor
+^/AGENTS.md
+^/CLAUDE.md
+^/GEMINI.md
+^/.prettier.*
+^/.editorconfig
+^/node_modules
