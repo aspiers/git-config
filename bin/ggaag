@@ -1,0 +1,50 @@
+#!/bin/bash
+#
+# Git Annex All: get
+
+succeeded=()
+failed=()
+
+trap report_summary EXIT QUIT ERR
+
+report_summary () {
+    div
+    echo -e "Succeeded: ${succeeded[@]}\n"
+    echo -e "Failed: ${failed[@]}"
+}
+
+opts=(
+    $(
+        cd ~/.GIT/adamspiers.org/shell-env/ &&
+            git-annex-clean-opts
+    )
+)
+
+if [ $? != 0 ]; then
+    echo >&2 "git-annex-clean-opts failed; aborting"
+    exit 1
+fi
+
+echo "Using git opts: $opts"
+
+while read mr_name mr_dir; do
+    div
+
+    echo "$mr_dir"
+    cd "$mr_dir"
+
+    if ! [ -d .git/annex ]; then
+        echo "No annex found; skipping."
+        continue
+    fi
+
+    #echo git ${opts[@]} annex get "$@"
+
+    if git ${opts[@]} annex get "$@"; then
+        succeeded+=($mr_name)
+    else
+        failed+=($mr_name)
+    fi
+
+    report_summary
+done <"${1:-$HOME/.mrsync}"
