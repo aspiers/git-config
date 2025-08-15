@@ -53,3 +53,5 @@ autom4te\.cache
 .*\.log
 README.*
 COPYING
+
+\.editorconfig
