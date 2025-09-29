@@ -66,3 +66,4 @@ COPYING
 ^/.prettier.*
 ^/.editorconfig
 ^/node_modules
+\.editorconfig
