@@ -55,4 +55,4 @@ build-tmp/
 .mypy_cache/
 .log/
 /.stfolder/
-/.claude/settings.local.json
+**/.claude/settings.local.json
