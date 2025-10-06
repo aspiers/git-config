@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# GitHub Remote Add
+# since https://cli.github.com is too braindead to add it, after
+# hub did it for years and then was killed off ...
+
+usage () {
+    # Call as: usage [EXITCODE] [USAGE MESSAGE]
+    exit_code=1
+    if [[ "$1" == [0-9] ]]; then
+        exit_code="$1"
+        shift
+    fi
+
+    me=$(basename $0)
+
+    cat <<EOF >&2
+Usage: $me [options] USER [REMOTE-REPO-NAME]
+Options:
+  -h, --help     Show this help and exit
+options
+EOF
+
+    if [ -n "$1" ]; then
+        echo >&2
+        echo >&2 "$*"
+    fi
+
+    exit "$exit_code"
+}
+
+get_repo_name_from_remote () {
+    local remote="$1"
+
+    if ! remote_url="$(git remote get-url $remote)"; then
+        return 1
+    fi
+
+    if [ -z "$remote_url" ]; then
+        return 1
+    fi
+
+    remote_repo_name="${remote_url##*/}"
+    remote_repo_name="${remote_repo_name%.git}"
+
+    return 0
+}
+
+main () {
+    if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+        usage 0
+    fi
+
+    get_repo_name_from_remote origin ||
+        get_repo_name_from_remote upstream ||
+        get_repo_name_from_remote github
+
+    user="$1"
+    repo_name="${2:-$remote_repo_name}"
+
+    if [ -z "$user" ]; then
+        usage "Must specify a user"
+    fi
+
+    echo git remote add "$user" "git@github.com:$user/$repo_name.git"
+    git remote add "$user" "git@github.com:$user/$repo_name.git"
+    git fetch "$user"
+}
+
+main "$@"
