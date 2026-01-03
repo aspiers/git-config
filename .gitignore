@@ -56,3 +56,4 @@ build-tmp/
 .log/
 /.stfolder/
 **/.claude/settings.local.json
+/tmp/
