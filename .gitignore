@@ -57,3 +57,4 @@ build-tmp/
 /.stfolder/
 **/.claude/settings.local.json
 /tmp/
+/.worktrees/
