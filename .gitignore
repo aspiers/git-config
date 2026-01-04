@@ -58,3 +58,4 @@ build-tmp/
 **/.claude/settings.local.json
 /tmp/
 /.worktrees/
+/.safe-rm/
