@@ -28,8 +28,7 @@ git config --global --bool pager.diff-tree true
 git config --global --bool rebase.autosquash true
 git config --global        pull.ff only
 
-git config --global push.default >/dev/null || \
-    git config --global push.default upstream
+git config --global push.default current
 git config --global remote.pushDefault github
 
 # tarsius recommends "always" as the sensible default, not "true":
