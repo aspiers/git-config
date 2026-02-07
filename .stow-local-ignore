@@ -67,3 +67,4 @@ COPYING
 ^/.editorconfig
 ^/node_modules
 \.editorconfig
+^/\.beads
