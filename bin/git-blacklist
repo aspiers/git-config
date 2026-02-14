@@ -1,12 +1,6 @@
 #!/bin/bash
 #
-# Interactive wrapper around git-icing and git notes which makes
-# it easy to cherry-pick and/or blacklist non-upstreamed commits.
-#
-# Use git-rnotes to push/pull the upstreaming blacklist to/from
-# other repositories:
-#
-#   http://article.gmane.org/gmane.comp.cloud.crowbar/386
+# Blacklist a commit.
 
 usage () {
     # Call as: usage [EXITCODE] [USAGE MESSAGE]
@@ -63,31 +57,52 @@ EOF
 }
 
 main () {
-    parse_opts "$@"
-
+#    parse_opts "$@"
+#
     : ${GIT_NOTES_REF:=refs/notes/upstreaming}
     export GIT_NOTES_REF
+#
+#    exec 3>&0 # save STDIN tty
+#
+#    "$@" | while read mode sha1 rest; do
+#        head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
+#
+#        abbrev_sha1
+#
+#        mode_should_skip && continue
+#
+#        git show --notes "$sha1"
+#        echo
+#
+#        cherry_menu
+#
+#        if [ -z "$skip" ]; then
+#            echo
+#            do_cherry_pick
+#        fi
+#
+#        divider
+#    done
 
-    exec 3>&0 # save STDIN tty
+    head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
 
-    "$@" | while read mode sha1 rest; do
-        head=$( git rev-parse HEAD ) || fatal "git rev-parse HEAD failed; aborting."
-
-        abbrev_sha1
-
-        mode_should_skip && continue
-
-        git show --notes "$sha1"
-        echo
-
-        cherry_menu
-
-        if [ -z "$skip" ]; then
-            echo
-            do_cherry_pick
+    MATCH=0
+    for i in `git branch -a`; do
+        if [ "$1" == "$i" ]; then
+            MATCH=1
+            break
         fi
+    done
+    if [ $MATCH -eq 0 ]; then
+        echo "branch $1 does not exist"
+        exit 1
+    fi
 
-        divider
+    while read mode sha1 rest; do
+        if [ "$mode" = "+" ]; then
+            safe_run git notes append -m"skip: $1
+$rest" "$sha1"
+        fi
     done
 }
 
@@ -307,7 +322,7 @@ fatal () {
 
 safe_run () {
     if ! "$@"; then
-        fatal "$* failed! Aborting."
+        fatal "$* failed! Aborting." >&2
     fi
 }
 
