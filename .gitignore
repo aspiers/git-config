@@ -61,3 +61,4 @@ build-tmp/
 /.safe-rm/
 .agent-browser-data/
 .beads/dolt-server.port
+.pi-lens/
