@@ -62,3 +62,4 @@ build-tmp/
 .agent-browser-data/
 .beads/dolt-server.port
 .pi-lens/
+.pi/extension-times/
