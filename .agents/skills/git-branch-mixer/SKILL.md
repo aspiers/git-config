@@ -13,6 +13,12 @@ base and merging all the other branches in.
 The typical use case is testing a combination of feature/bugfix branches
 together via a throw-away temporary working branch.
 
+**Critical rule:** mixdown target branches (especially `working`) are local
+throw-away integration branches. Never push a mixdown target branch, create a PR
+from it, or otherwise publish it unless the user explicitly asks for that exact
+action. Independent source branches may be pushed as needed, but the mixed
+working branch stays local by default.
+
 ## Configuring mixes with `ggmx`
 
 ```bash
