@@ -64,3 +64,4 @@ build-tmp/
 .beads/dolt-server.port
 .pi-lens/
 .pi/extension-times/
+.perles/
