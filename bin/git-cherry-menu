@@ -40,6 +40,11 @@ suggested options:
           issue tracker without getting in the way during repeated
           runs of cherry-menu.
 
+    -c cherry-menu.skip-branch=<branch>
+          The blacklist default setting is to blacklist a commit for 'all'
+          upstream branches. If one wants to blacklist a commit for a specific
+          branch by default when doing a run of cherry-menu, then specify it here.
+
 COMMAND is typically "git icing -v2" or "git cherry" but can be
 anything which gives output in the same format, e.g.
 
@@ -253,12 +258,16 @@ cherry_menu () {
                 ;;
             b)
                 if ! has_note "$sha1"; then
-                    safe_run git notes append -m'skip: all
-XXX  (you can optionally change the "all" above to the name of the
-XXX  upstream branch if you want to limit blacklisting to that upstream)
+                    branch="$(git config cherry-menu.skip-branch)"
+                    if test -z $branch; then
+                       branch="all"
+                    fi
+                    safe_run git notes append -m "skip: `echo $branch`
+###  (you can optionally change the "all" above to the name of the
+###  upstream branch if you want to limit blacklisting to that upstream)
 
-XXX  Enter your justification for blacklisting here or
-XXX  remove the whole note to cancel blacklisting.' "$sha1"
+### Enter your justification for blacklisting here or
+###  remove the whole note to cancel blacklisting." "$sha1"
                 fi
                 safe_run git notes edit "$sha1" <&3
                 echo
