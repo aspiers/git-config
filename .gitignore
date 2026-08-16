@@ -64,4 +64,9 @@ build-tmp/
 .beads/dolt-server.port
 .pi-lens/
 .pi/extension-times/
+# pi-shortcuts writes this cache relative to process.cwd(), so it lands
+# in whichever directory pi was run from.  Keyed only on pi
+# version/platform/schema, so it regenerates on demand.  Upstream bug:
+# https://github.com/siesing/pi-shortcuts/issues/2
+.pi-shortcuts-cache/
 .perles/
