@@ -45,6 +45,7 @@
 .pi-shortcuts-cache/
 .pi-lens/
 .pi/extension-times/
+.refact/
 .svn
 .xvpics
 .zshhistory
