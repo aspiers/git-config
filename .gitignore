@@ -61,6 +61,7 @@ build-tmp/
 /.worktrees/
 /.safe-rm/
 .agent-browser-data/
+.beads.*\.lock
 .beads/dolt-server.port
 .pi-lens/
 .pi/extension-times/
