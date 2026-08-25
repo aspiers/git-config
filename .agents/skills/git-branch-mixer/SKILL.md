@@ -19,6 +19,13 @@ from it, or otherwise publish it unless the user explicitly asks for that exact
 action. Independent source branches may be pushed as needed, but the mixed
 working branch stays local by default.
 
+**Default location:** when producing a mixdown for the `working` branch, run it
+from the repository's main checkout, not from a linked worktree, unless the user
+specifies another location. The main checkout is normally where the combined
+software is built, run, and tested; source branches may still live in linked
+worktrees. Because the mixdown checks out and resets `working`, stop and ask
+before stashing or otherwise moving aside changes from a dirty main checkout.
+
 ## Configuring mixes with `ggmx`
 
 ```bash
@@ -54,6 +61,11 @@ ggmxd -c BASE B1 B2            # explicit mixdown, stay on target branch
 Without `-c`, `ggmxd` restores your previously checked-out branch after
 completing the mixdown. Use this when you want to rebuild the mix in the
 background without switching away from your current branch.
+
+After a successful mixdown, if the combined software can be run or otherwise
+tested, rebuild it and restart the running instance from the main checkout
+before reporting it ready. A mixdown that has not reached the user's actual
+test environment is not complete.
 
 ### Other options
 
