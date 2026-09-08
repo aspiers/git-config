@@ -1,0 +1,10 @@
+log_level: warning
+behavior:
+    auto_gc_behavior:
+        archive_level: 0
+listener:
+    host: 127.0.0.1
+    port: 37777
+cfg_dir: /home/adam/.GIT/adamspiers.org/git/.beads/dolt/.doltcfg
+user_session_vars: []
+jwks: []
