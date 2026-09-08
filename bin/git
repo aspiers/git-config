@@ -1,0 +1,289 @@
+#!/bin/bash
+
+# Guard direct commits to throw-away mixdown branches without replacing Git's
+# own hook configuration.
+
+find_real_git () {
+    local directory candidate
+    local search_path=( )
+
+    IFS=: read -r -a search_path <<< "$PATH"
+    for directory in "${search_path[@]}"; do
+        [ -n "$directory" ] || directory=.
+        candidate=$directory/git
+        if [ -x "$candidate" ] && [ ! "$candidate" -ef "$0" ]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+real_git=${AS_GIT_REAL_EXECUTABLE:-}
+if [ -z "$real_git" ]; then
+    real_git=$(find_real_git)
+fi
+
+if [ ! -x "$real_git" ]; then
+    echo >&2 "git wrapper: could not find the real Git executable"
+    exit 127
+fi
+
+args=( "$@" )
+context_args=( )
+command=
+command_index=-1
+i=0
+
+# Find the subcommand while retaining options that affect repository or config
+# discovery. Unknown top-level options are left to Git rather than guessed at.
+while (( i < ${#args[@]} )); do
+    arg=${args[i]}
+    case "$arg" in
+        -C|-c|--git-dir|--work-tree|--namespace|--super-prefix)
+            if (( i + 1 >= ${#args[@]} )); then
+                exec "$real_git" "$@"
+            fi
+            context_args+=( "$arg" "${args[i + 1]}" )
+            (( i += 2 ))
+            ;;
+        --config-env=*|--git-dir=*|--work-tree=*|--namespace=*|--super-prefix=*)
+            context_args+=( "$arg" )
+            (( i++ ))
+            ;;
+        --bare)
+            context_args+=( "$arg" )
+            (( i++ ))
+            ;;
+        -p|--paginate|-P|--no-pager|--no-replace-objects|--no-lazy-fetch|--no-optional-locks|--no-advice|--literal-pathspecs|--glob-pathspecs|--noglob-pathspecs|--icase-pathspecs)
+            (( i++ ))
+            ;;
+        --exec-path=*)
+            (( i++ ))
+            ;;
+        -v|--version|-h|--help|--exec-path|--html-path|--man-path|--info-path)
+            exec "$real_git" "$@"
+            ;;
+        --)
+            (( i++ ))
+            if (( i < ${#args[@]} )); then
+                command=${args[i]}
+                command_index=$i
+            fi
+            break
+            ;;
+        -*)
+            exec "$real_git" "$@"
+            ;;
+        *)
+            command=$arg
+            command_index=$i
+            break
+            ;;
+    esac
+done
+
+tokenize_alias () {
+    local alias_value=$1
+    local token_file
+
+    token_file=$(mktemp "${TMPDIR:-/tmp}/git-wrapper-alias.XXXXXX") || return 1
+    if ! python3 - "$alias_value" >"$token_file" <<'PY'
+import shlex
+import sys
+
+try:
+    words = shlex.split(sys.argv[1], posix=True)
+except ValueError:
+    raise SystemExit(1)
+
+for word in words:
+    sys.stdout.buffer.write(word.encode() + b"\0")
+PY
+    then
+        rm -f "$token_file"
+        return 1
+    fi
+
+    alias_words=( )
+    mapfile -d '' -t alias_words <"$token_file"
+    rm -f "$token_file"
+}
+
+resolved_alias_args=( )
+resolves_to_commit () {
+    local candidate=$1
+    local alias_value arg
+    local alias_words=( )
+    local alias_index
+    local depth=0
+
+    while (( depth < 10 )); do
+        if [ "$candidate" = commit ]; then
+            return 0
+        fi
+
+        if ! alias_value=$("$real_git" "${context_args[@]}" config --get "alias.$candidate" 2>/dev/null); then
+            return 1
+        fi
+
+        # Shell aliases run arbitrary commands. A nested `git commit` still
+        # reaches this wrapper unless the alias deliberately bypasses PATH.
+        case "$alias_value" in
+            !*) return 1 ;;
+        esac
+
+        if ! tokenize_alias "$alias_value"; then
+            echo >&2 "git wrapper: could not parse alias '$candidate' safely"
+            return 2
+        fi
+        (( ${#alias_words[@]} > 0 )) || return 1
+        alias_index=0
+        while (( alias_index < ${#alias_words[@]} )); do
+            arg=${alias_words[alias_index]}
+            case "$arg" in
+                -c)
+                    (( alias_index + 1 < ${#alias_words[@]} )) || return 1
+                    context_args+=( "$arg" "${alias_words[alias_index + 1]}" )
+                    (( alias_index += 2 ))
+                    ;;
+                --config-env=*)
+                    context_args+=( "$arg" )
+                    (( alias_index++ ))
+                    ;;
+                -p|--paginate|-P|--no-pager|--no-replace-objects|--no-lazy-fetch|--no-optional-locks|--no-advice)
+                    (( alias_index++ ))
+                    ;;
+                --)
+                    (( alias_index++ ))
+                    break
+                    ;;
+                -*)
+                    return 1
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
+        done
+
+        (( alias_index < ${#alias_words[@]} )) || return 1
+        candidate=${alias_words[alias_index]}
+        resolved_alias_args=(
+            "${alias_words[@]:alias_index + 1}"
+            "${resolved_alias_args[@]}"
+        )
+        (( depth++ ))
+    done
+
+    return 1
+}
+
+commit_skips_guard () {
+    local no_verify=
+    local dry_run=
+    local consume_next=
+    local arg cluster option
+
+    while (( $# > 0 )); do
+        arg=$1
+        shift
+
+        if [ -n "$consume_next" ]; then
+            consume_next=
+            continue
+        fi
+
+        case "$arg" in
+            --)
+                break
+                ;;
+            --no-veri|--no-verif|--no-verify)
+                no_verify=y
+                ;;
+            --veri|--verif|--verify)
+                no_verify=
+                ;;
+            --dry-run)
+                dry_run=y
+                ;;
+            --no-dry-run)
+                dry_run=
+                ;;
+            -h|--help)
+                return 0
+                ;;
+            --file|--message|--reedit-message|--reuse-message|--fixup|--squash|--author|--date|--cleanup|--trailer|--template|--unified|--inter-hunk-context|--pathspec-from-file)
+                consume_next=y
+                ;;
+            --quiet|--no-quiet|--verbose|--no-verbose|--reset-author|--no-reset-author|--signoff|--no-signoff|--edit|--no-edit|--status|--no-status|--all|--no-all|--include|--no-include|--interactive|--no-interactive|--patch|--no-patch|--only|--no-only|--short|--no-short|--branch|--no-branch|--ahead-behind|--no-ahead-behind|--porcelain|--no-porcelain|--long|--no-long|--null|--no-null|--amend|--no-amend|--allow-empty|--allow-empty-message|--no-post-rewrite|--post-rewrite|--pathspec-file-nul|--no-pathspec-file-nul)
+                ;;
+            --*=*)
+                ;;
+            --*)
+                # Unknown long options may consume the next argument. Do not
+                # mistake that value for a later `--no-verify`.
+                return 1
+                ;;
+            -?*)
+                cluster=${arg#-}
+                while [ -n "$cluster" ]; do
+                    option=${cluster:0:1}
+                    cluster=${cluster:1}
+                    case "$option" in
+                        n)
+                            no_verify=y
+                            ;;
+                        h)
+                            return 0
+                            ;;
+                        F|m|c|C|t|U)
+                            [ -n "$cluster" ] || consume_next=y
+                            break
+                            ;;
+                        S|u)
+                            # Their optional values must be attached.
+                            break
+                            ;;
+                    esac
+                done
+                ;;
+        esac
+    done
+
+    [ -n "$no_verify" ] || [ -n "$dry_run" ]
+}
+
+skip_guard=
+if [ "$command_index" -ge 0 ]; then
+    resolves_to_commit "$command"
+    resolution_status=$?
+    if [ "$resolution_status" -eq 2 ]; then
+        exit 1
+    fi
+
+    if [ "$resolution_status" -eq 0 ]; then
+        commit_args=(
+            "${resolved_alias_args[@]}"
+            "${args[@]:command_index + 1}"
+        )
+        if commit_skips_guard "${commit_args[@]}"; then
+            skip_guard=y
+        fi
+
+        if [ -z "$skip_guard" ] && [ "${AS_GIT_ALLOW_WORKING_COMMIT:-}" != 1 ]; then
+            if branch=$("$real_git" "${context_args[@]}" symbolic-ref --quiet HEAD 2>/dev/null) &&
+               [ "$branch" = refs/heads/working ]; then
+                cat >&2 <<'EOF'
+Refusing to commit directly on the throw-away 'working' branch.
+Commit on a source branch, then rebuild 'working' with git mixdown.
+Use --no-verify or AS_GIT_ALLOW_WORKING_COMMIT=1 to override deliberately.
+EOF
+                exit 1
+            fi
+        fi
+    fi
+fi
+
+exec "$real_git" "$@"

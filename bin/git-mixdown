@@ -140,6 +140,12 @@ main () {
     fi
 
     echo "Will start at $base and merge: ${branches[@]}"
+
+    # Permit intended commits on the throw-away branch without skipping hooks.
+    if [ "$combined_branch" = working ]; then
+        export AS_GIT_ALLOW_WORKING_COMMIT=1
+    fi
+
     safe_run git checkout -B "$combined_branch" "$base"
 
     if [ "$strategy" = octopus ]; then

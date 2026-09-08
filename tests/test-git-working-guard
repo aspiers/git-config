@@ -1,0 +1,200 @@
+#!/bin/bash
+
+set -euo pipefail
+
+repo_root=$(cd "$(dirname "$0")/.." && pwd)
+git_wrapper=$repo_root/bin/git
+real_git=${AS_GIT_REAL_EXECUTABLE:-$(git --exec-path)/git}
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+export GIT_CONFIG_SYSTEM=/dev/null
+export GIT_CONFIG_GLOBAL=$tmp/global.gitconfig
+repo=$tmp/repo
+hook_log=$tmp/hooks.log
+
+fail () {
+    echo >&2 "FAIL: $*"
+    exit 1
+}
+
+assert_commit_fails () {
+    local output
+
+    if output=$("$git_wrapper" "$@" 2>&1); then
+        fail "commit unexpectedly succeeded: git $*"
+    fi
+    case "$output" in
+        *"Refusing to commit directly"*) ;;
+        *) fail "guard rejection was not reported: $output" ;;
+    esac
+}
+
+assert_hook_log () {
+    local expected=$1
+    local actual=
+
+    if [ -f "$hook_log" ]; then
+        actual=$(cat "$hook_log")
+    fi
+    [ "$actual" = "$expected" ] ||
+        fail "expected hook log '$expected', got '$actual'"
+}
+
+make_hooks () {
+    local directory=$1
+    local label=$2
+    local hook
+
+    mkdir -p "$directory"
+    for hook in pre-commit prepare-commit-msg commit-msg post-commit; do
+        cat >"$directory/$hook" <<EOF
+#!/bin/sh
+echo $label:$hook >>"$hook_log"
+EOF
+        chmod +x "$directory/$hook"
+    done
+}
+
+all_hooks () {
+    local label=$1
+
+    printf '%s\n' \
+        "$label:pre-commit" \
+        "$label:prepare-commit-msg" \
+        "$label:commit-msg" \
+        "$label:post-commit"
+}
+
+unskippable_hooks () {
+    local label=$1
+
+    printf '%s\n' \
+        "$label:prepare-commit-msg" \
+        "$label:post-commit"
+}
+
+"$real_git" init -q -b main "$repo"
+"$real_git" -C "$repo" config user.name 'Guard Test'
+"$real_git" -C "$repo" config user.email guard@example.invalid
+printf 'initial\n' >"$repo/file"
+"$real_git" -C "$repo" add file
+"$real_git" -C "$repo" commit -qm initial
+
+project_hooks=$repo/project-hooks
+make_hooks "$project_hooks" project
+"$real_git" -C "$repo" config core.hooksPath "$project_hooks"
+"$real_git" -C "$repo" switch -qc working
+"$real_git" -C "$repo" tag working
+printf 'blocked\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+
+assert_commit_fails -C "$repo" commit -m blocked
+assert_commit_fails -C "$repo" commit -m --no-verify
+assert_commit_fails -C "$repo" commit --mess --no-verify
+assert_hook_log ''
+[ "$("$real_git" -C "$repo" log -1 --format=%s)" = initial ] ||
+    fail 'blocked commit changed HEAD'
+
+"$real_git" -C "$repo" config alias.ci commit
+"$real_git" -C "$repo" config alias.ciopts '-c commit.gpgSign=false commit'
+"$real_git" -C "$repo" config alias.escaped 'commit -m fixed\ -n'
+"$real_git" -C "$repo" config alias.nested 'ciopts --amend'
+"$real_git" -C "$repo" config alias.nv 'commit --no-verify'
+"$real_git" -C "$repo" config alias.bad "commit '"
+assert_commit_fails --no-pager -C "$repo" ci -m alias-blocked
+assert_commit_fails -C "$repo" ciopts -m leading-option-alias-blocked
+assert_commit_fails -C "$repo" escaped
+assert_commit_fails -C "$repo" nested
+assert_commit_fails -C "$repo" nv --verify -m alias-bypass-overridden
+if output=$("$git_wrapper" -C "$repo" bad 2>&1); then
+    fail 'malformed commit alias unexpectedly succeeded'
+fi
+case "$output" in
+    *"could not parse alias 'bad' safely"*) ;;
+    *) fail "alias parser failure was not reported: $output" ;;
+esac
+assert_hook_log ''
+"$git_wrapper" -C "$repo" status --short >/dev/null
+"$git_wrapper" -C "$repo" merge --ff-only HEAD >/dev/null
+
+AS_GIT_ALLOW_WORKING_COMMIT=1 "$git_wrapper" -C "$repo" commit -qm allowed-by-environment
+assert_hook_log "$(all_hooks project)"
+
+: >"$hook_log"
+printf 'no verify\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" commit -qn -m allowed-by-no-verify
+assert_hook_log "$(unskippable_hooks project)"
+
+: >"$hook_log"
+printf 'alias bypass\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" nv -qm allowed-by-alias
+assert_hook_log "$(unskippable_hooks project)"
+
+: >"$hook_log"
+printf 'abbreviated bypass\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" commit --signoff --no-veri -qm allowed-by-abbreviated-no-verify
+assert_hook_log "$(unskippable_hooks project)"
+
+: >"$hook_log"
+"$git_wrapper" -C "$repo" switch -qc source
+printf 'source\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" commit -qm allowed-on-source
+assert_hook_log "$(all_hooks project)"
+
+# Preserve Git's normal precedence: a project hooksPath overrides a global one.
+global_hooks=$tmp/global-hooks
+make_hooks "$global_hooks" global
+"$real_git" config --global core.hooksPath "$global_hooks"
+: >"$hook_log"
+printf 'project wins\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" commit -qm project-hook-precedence
+assert_hook_log "$(all_hooks project)"
+
+"$real_git" -C "$repo" config --unset core.hooksPath
+: >"$hook_log"
+printf 'global runs\n' >>"$repo/file"
+"$real_git" -C "$repo" add file
+"$git_wrapper" -C "$repo" commit -qm global-hook
+assert_hook_log "$(all_hooks global)"
+
+# Worktree-local hook configuration retains its normal precedence.
+worktree=$tmp/worktree
+worktree_hooks=$tmp/worktree-hooks
+make_hooks "$worktree_hooks" worktree
+"$real_git" -C "$repo" config extensions.worktreeConfig true
+"$real_git" -C "$repo" tag -d working >/dev/null
+"$real_git" -C "$repo" worktree add -q "$worktree" working
+"$real_git" -C "$worktree" config --worktree core.hooksPath "$worktree_hooks"
+: >"$hook_log"
+printf 'worktree\n' >>"$worktree/file"
+"$real_git" -C "$worktree" add file
+assert_commit_fails -C "$worktree" commit -m blocked-in-worktree
+assert_hook_log ''
+AS_GIT_ALLOW_WORKING_COMMIT=1 "$git_wrapper" -C "$worktree" commit -qm allowed-in-worktree
+assert_hook_log "$(all_hooks worktree)"
+"$real_git" -C "$repo" worktree remove -f "$worktree"
+
+# git-mixdown exports its bypass only to child Git commands.
+fake_bin=$tmp/fake-bin
+mixdown_log=$tmp/mixdown.log
+mkdir "$fake_bin"
+cat >"$fake_bin/git" <<EOF
+#!/bin/sh
+case "\$*" in
+    'rev-parse --abbrev-ref HEAD') echo main ;;
+    merge*) echo "\${AS_GIT_ALLOW_WORKING_COMMIT:-}" >"$mixdown_log" ;;
+esac
+EOF
+chmod +x "$fake_bin/git"
+env -u AS_GIT_ALLOW_WORKING_COMMIT PATH="$fake_bin:$PATH" \
+    "$repo_root/bin/git-mixdown" main source >/dev/null
+[ "$(cat "$mixdown_log")" = 1 ] || fail 'git-mixdown did not export its bypass'
+[ -z "${AS_GIT_ALLOW_WORKING_COMMIT:-}" ] || fail 'git-mixdown bypass leaked to its parent'
+
+printf 'PASS: git working-branch guard\n'

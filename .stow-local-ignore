@@ -67,4 +67,10 @@ COPYING
 ^/.editorconfig
 ^/node_modules
 \.editorconfig
-^/\.beads
+^/tests
+^/\.agents
+^/\.beads$
+^/\.beads-solo$
+^/\.beads\.gate\.lock$
+^/\.claude
+^/\.codex
